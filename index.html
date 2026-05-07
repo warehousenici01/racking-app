@@ -274,7 +274,10 @@ function addItem(){
     </div>
     <div class="item-body">
       <div class="item-fields">
-        <div class="field"><label>Nama Barang</label><input type="text" id="barang-${id}" placeholder="Isi nama barang..."></div>
+        <div class="item-fields-row">
+          <div class="field"><label>Nama Barang</label><input type="text" id="barang-${id}" placeholder="Isi nama barang..."></div>
+          <div class="field"><label>Qty / Bin</label><input type="number" class="default-qty-input" id="dqty-${id}" value="1" min="1" style="width:100%"></div>
+        </div>
         ${supplierField}
       </div>
       <div class="bin-selector">
@@ -290,10 +293,6 @@ function addItem(){
           <div class="drill-field">
             <div class="drill-lbl">Kolom</div>
             <select class="drill-sel" id="dc-${id}">${colOpts(cfg.cols)}</select>
-          </div>
-          <div class="drill-field">
-            <div class="drill-lbl">Qty</div>
-            <input type="number" class="default-qty-input" id="dqty-${id}" value="1" min="1">
           </div>
           <div class="drill-field" id="side-wrap-${id}">
             ${getSideHtml(id,cfg.hasSide)}
