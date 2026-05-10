@@ -227,6 +227,7 @@ async function submitLembur(){
   const timestamp=new Date().toLocaleDateString('id-ID')+' '+new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
 
   const payload={
+    app: "lembur",
     timestamp, nik, nama,
     tanggal: formatTanggal(tgl),
     jamMulai: mulai,
