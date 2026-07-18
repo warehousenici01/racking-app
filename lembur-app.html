@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Lembur//Entry</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;--surface:#161b27;--surface2:#1e2535;
+  --accent:#f59e0b;--accent2:#0066ff;--warn:#ff6b35;
+  --text:#e8eaf0;--muted:#5a6278;--border:#252d42;
+  --radius:8px;--mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh;}
+
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.logo{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--accent);letter-spacing:.05em;}
+.sub{font-family:var(--mono);font-size:11px;color:var(--muted);}
+
+.main{padding:20px 16px;max-width:500px;margin:0 auto;padding-bottom:80px;}
+.sec-lbl{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;}
+
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.field:last-child{margin-bottom:0;}
+.field label{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;}
+.field input,.field select,.field textarea{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:13px;padding:10px 12px;border-radius:var(--radius);outline:none;transition:border-color .15s;width:100%;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);}
+.field input::placeholder,.field textarea::placeholder{color:var(--muted);}
+.field select option{background:var(--surface2);}
+.field textarea{resize:vertical;min-height:80px;line-height:1.5;}
+
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+/* Durasi display */
+.durasi-box{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.istirahat-wrap{margin-bottom:14px;}
+.istirahat-label{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
+.istirahat-label input[type=checkbox]{display:none;}
+.istirahat-box{width:20px;height:20px;border:2px solid var(--border);border-radius:4px;background:var(--surface2);flex-shrink:0;transition:all .15s;display:flex;align-items:center;justify-content:center;}
+.istirahat-label input:checked + .istirahat-box{background:var(--accent);border-color:var(--accent);}
+.istirahat-label input:checked + .istirahat-box::after{content:'✓';font-size:13px;color:#000;font-weight:700;}
+.istirahat-txt{font-size:13px;color:var(--text);}
+.istirahat-note{font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:4px;}
+.durasi-lbl{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;}
+.durasi-val{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--accent);}
+.durasi-unit{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* Submit */
+.btn-submit{width:100%;background:var(--accent);border:none;color:#000;font-family:var(--mono);font-size:14px;font-weight:600;padding:14px;border-radius:var(--radius);cursor:pointer;letter-spacing:.05em;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-submit:hover{background:#fbbf24;transform:translateY(-1px);}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed;transform:none!important;}
+.spinner{width:14px;height:14px;border:2px solid rgba(0,0,0,.3);border-top-color:#000;border-radius:50%;animation:spin .6s linear infinite;display:none;}
+.spinner.show{display:block;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Success state */
+.success-screen{display:none;text-align:center;padding:40px 20px;}
+.success-screen.show{display:block;}
+.success-icon{font-size:48px;margin-bottom:16px;}
+.success-title{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--accent);margin-bottom:8px;}
+.success-sub{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:24px;}
+
+/* Bukti card — yang akan didownload */
+.bukti-card{background:#fff;border-radius:var(--radius);padding:20px;text-align:left;margin-bottom:16px;color:#111;}
+.bukti-header{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #f59e0b;padding-bottom:10px;margin-bottom:14px;}
+.bukti-logo{font-family:var(--mono);font-size:13px;font-weight:700;color:#f59e0b;letter-spacing:.05em;}
+.bukti-title{font-family:var(--mono);font-size:11px;color:#666;}
+.bukti-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #eee;font-size:12px;}
+.bukti-row:last-child{border-bottom:none;}
+.bukti-lbl{font-family:var(--mono);color:#888;font-size:11px;}
+.bukti-val{font-family:var(--mono);color:#111;font-weight:500;font-size:12px;text-align:right;max-width:60%;}
+.bukti-footer{margin-top:12px;padding-top:10px;border-top:1px solid #eee;font-family:var(--mono);font-size:10px;color:#aaa;text-align:center;}
+.bukti-stamp{display:inline-block;border:2px solid #00c48c;color:#00c48c;font-family:var(--mono);font-size:11px;font-weight:700;padding:4px 12px;border-radius:4px;letter-spacing:.1em;margin-top:8px;}
+
+.btn-download{width:100%;background:var(--accent);border:none;color:#000;font-family:var(--mono);font-size:13px;font-weight:600;padding:12px;border-radius:var(--radius);cursor:pointer;letter-spacing:.05em;transition:all .15s;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-download:hover{background:#fbbf24;transform:translateY(-1px);}
+.btn-reset{background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--mono);font-size:12px;padding:10px 24px;border-radius:var(--radius);cursor:pointer;transition:all .15s;width:100%;}
+.btn-reset:hover{border-color:var(--accent);color:var(--accent);}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);color:#fff;font-family:var(--mono);font-size:12px;font-weight:600;padding:12px 24px;border-radius:40px;transition:transform .3s cubic-bezier(.34,1.56,.64,1);letter-spacing:.05em;pointer-events:none;z-index:999;white-space:nowrap;max-width:90vw;text-align:center;background:var(--warn);}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:var(--surface);border:1px solid var(--warn);border-radius:var(--radius);padding:24px;max-width:400px;width:100%;}
+.modal-icon{font-size:32px;text-align:center;margin-bottom:12px;}
+.modal-title{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--warn);text-align:center;margin-bottom:8px;}
+.modal-body{font-size:13px;color:var(--muted);text-align:center;line-height:1.6;margin-bottom:8px;}
+.modal-detail{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;margin-bottom:16px;font-family:var(--mono);font-size:11px;color:var(--text);line-height:1.8;}
+.modal-detail span{color:var(--muted);}
+.modal-btns{display:flex;gap:8px;}
+.modal-btn-cancel{flex:1;background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--mono);font-size:12px;padding:10px;border-radius:var(--radius);cursor:pointer;transition:all .15s;}
+.modal-btn-cancel:hover{border-color:var(--text);color:var(--text);}
+.modal-btn-confirm{flex:1;background:var(--warn);border:none;color:#fff;font-family:var(--mono);font-size:12px;font-weight:600;padding:10px;border-radius:var(--radius);cursor:pointer;transition:all .15s;}
+.modal-btn-confirm:hover{background:#ff855a;}
+</style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<div class="header">
+  <span class="logo">LEMBUR//ENTRY</span>
+  <span class="sub" id="tgl-header">—</span>
+</div>
+
+<div class="main">
+
+  <!-- FORM -->
+  <div id="form-screen">
+    <div class="sec-lbl">Data Karyawan</div>
+    <div class="card">
+      <div class="field">
+        <label>NIK</label>
+        <input type="text" id="nik" placeholder="Masukkan NIK..." maxlength="20">
+      </div>
+      <div class="field">
+        <label>Nama Karyawan</label>
+        <input type="text" id="nama" placeholder="Masukkan nama lengkap...">
+      </div>
+    </div>
+
+    <div class="sec-lbl">Detail Lembur</div>
+    <div class="card">
+      <div class="field">
+        <label>Tanggal Lembur</label>
+        <input type="date" id="tgl-lembur">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Jam Mulai</label>
+          <select id="jam-mulai" onchange="hitungDurasi()"></select>
+        </div>
+        <div class="field">
+          <label>Jam Selesai</label>
+          <select id="jam-selesai" onchange="hitungDurasi()"></select>
+        </div>
+      </div>
+
+      <div class="durasi-box" id="durasi-box" style="display:none;">
+        <div>
+          <div class="durasi-lbl">Durasi Lembur</div>
+          <div class="durasi-unit">jam kerja</div>
+        </div>
+        <div class="durasi-val" id="durasi-val">0j 0m</div>
+      </div>
+
+      <div class="istirahat-wrap" id="istirahat-wrap" style="display:none;">
+        <label class="istirahat-label">
+          <input type="checkbox" id="istirahat" onchange="hitungDurasi()">
+          <span class="istirahat-box"></span>
+          <span class="istirahat-txt">Termasuk istirahat 1 jam <span class="istirahat-note">(durasi akan dikurangi 1 jam)</span></span>
+        </label>
+      </div>
+
+      <div class="field">
+        <label>Alasan Lembur</label>
+        <textarea id="alasan" placeholder="Jelaskan alasan lembur..."></textarea>
+      </div>
+    </div>
+
+    <button class="btn-submit" id="btn-submit" onclick="submitLembur()">
+      <div class="spinner" id="spinner"></div>
+      <span id="submit-label">Submit Report Lembur →</span>
+    </button>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="success-screen" id="success-screen">
+    <div class="success-icon">✅</div>
+    <div class="success-title">Report Berhasil Dikirim!</div>
+    <div class="success-sub">Data lembur kamu sudah masuk ke sistem.<br>Download bukti di bawah ini.</div>
+
+    <!-- Bukti yang akan didownload -->
+    <div class="bukti-card" id="bukti-card">
+      <div class="bukti-header">
+        <span class="bukti-logo">LEMBUR//ENTRY</span>
+        <span class="bukti-title">BUKTI REPORT LEMBUR</span>
+      </div>
+      <div id="bukti-rows"></div>
+      <div style="text-align:center;margin-top:12px;">
+        <div class="bukti-stamp">✓ TERVERIFIKASI</div>
+      </div>
+      <div class="bukti-footer" id="bukti-footer"></div>
+    </div>
+
+    <button class="btn-download" onclick="downloadBukti()">⬇ Download Bukti (PNG)</button>
+    <button class="btn-reset" onclick="resetForm()">+ Input Lembur Baru</button>
+  </div>
+
+</div>
+
+<!-- WARNING MODAL DUPLIKAT -->
+<div class="modal-overlay" id="modal-duplikat">
+  <div class="modal-box">
+    <div class="modal-icon">⚠️</div>
+    <div class="modal-title">Data Sudah Pernah Disubmit!</div>
+    <div class="modal-body">Ditemukan data lembur dengan informasi yang sama:</div>
+    <div class="modal-detail" id="modal-detail"></div>
+    <div class="modal-body" style="margin-bottom:16px;">Yakin mau submit lagi?</div>
+    <div class="modal-btns">
+      <button class="modal-btn-cancel" onclick="tutupModal()">Batal</button>
+      <button class="modal-btn-confirm" onclick="lanjutSubmit()">Ya, Tetap Submit</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const APPS_SCRIPT_URL = "PASTE_URL_APPS_SCRIPT_LEMBUR_DISINI";
+
+// Populate time dropdowns dengan interval 30 menit
+function populateTimeDropdowns(){
+  const opts = ['-- Pilih jam --'];
+  for(let h=0;h<24;h++){
+    for(let m of [0,30]){
+      const hh=String(h).padStart(2,'0');
+      const mm=String(m).padStart(2,'0');
+      opts.push(`${hh}:${mm}`);
+    }
+  }
+  ['jam-mulai','jam-selesai'].forEach(id=>{
+    const sel=document.getElementById(id);
+    sel.innerHTML=opts.map((o,i)=>`<option value="${i===0?'':o}">${o}</option>`).join('');
+  });
+}
+populateTimeDropdowns();
+const today = new Date();
+document.getElementById('tgl-header').textContent = today.toLocaleDateString('id-ID',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+document.getElementById('tgl-lembur').value = today.toISOString().split('T')[0];
+
+function hitungDurasi(){
+  const mulai = document.getElementById('jam-mulai').value;
+  const selesai = document.getElementById('jam-selesai').value;
+  const istirahat = document.getElementById('istirahat')?.checked || false;
+  const box = document.getElementById('durasi-box');
+  const val = document.getElementById('durasi-val');
+  const istirahatWrap = document.getElementById('istirahat-wrap');
+
+  if(!mulai || !selesai){ box.style.display='none'; istirahatWrap.style.display='none'; return; }
+
+  const [hM, mM] = mulai.split(':').map(Number);
+  const [hS, mS] = selesai.split(':').map(Number);
+  let totalMenit = (hS*60+mS) - (hM*60+mM);
+  if(totalMenit < 0) totalMenit += 24*60;
+
+  // Kurangi 1 jam kalau ada istirahat
+  if(istirahat) totalMenit = Math.max(0, totalMenit - 60);
+
+  const jam = Math.floor(totalMenit/60);
+  const menit = totalMenit%60;
+
+  box.style.display='flex';
+  istirahatWrap.style.display='block';
+  val.textContent = `${jam}j ${menit}m`;
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),4000);
+}
+
+function setLoading(on){
+  document.getElementById('btn-submit').disabled=on;
+  document.getElementById('spinner').className=on?'spinner show':'spinner';
+  document.getElementById('submit-label').textContent=on?'Mengirim...':'Submit Report Lembur →';
+}
+
+function formatTanggal(val){
+  const d=new Date(val+'T00:00:00');
+  return d.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+}
+
+// Simpan payload sementara untuk dipakai kalau user tetap mau submit
+let pendingPayload = null;
+
+function tutupModal(){
+  document.getElementById('modal-duplikat').classList.remove('show');
+  pendingPayload = null;
+}
+
+async function lanjutSubmit(){
+  document.getElementById('modal-duplikat').classList.remove('show');
+  if(!pendingPayload) return;
+  await kirimData(pendingPayload);
+  pendingPayload = null;
+}
+
+async function submitLembur(){
+  const nik      = document.getElementById('nik').value.trim();
+  const nama     = document.getElementById('nama').value.trim();
+  const tgl      = document.getElementById('tgl-lembur').value;
+  const mulai    = document.getElementById('jam-mulai').value;
+  const selesai  = document.getElementById('jam-selesai').value;
+  const alasan   = document.getElementById('alasan').value.trim();
+  const istirahat = document.getElementById('istirahat').checked;
+
+  // Validasi field wajib
+  if(!nik)     { showToast('NIK wajib diisi!'); return; }
+  if(!nama)    { showToast('Nama wajib diisi!'); return; }
+  if(!tgl)     { showToast('Tanggal lembur wajib diisi!'); return; }
+  if(!mulai)   { showToast('Jam mulai wajib diisi!'); return; }
+  if(!selesai) { showToast('Jam selesai wajib diisi!'); return; }
+  if(!alasan)  { showToast('Alasan lembur wajib diisi!'); return; }
+
+  // Validasi batas waktu input: maksimal 12 jam setelah jam selesai lembur
+  const now = new Date();
+  const [hS, mS] = selesai.split(':').map(Number);
+  const tglDate = new Date(tgl + 'T00:00:00');
+  let selesaiDate = new Date(tglDate);
+  selesaiDate.setHours(hS, mS, 0, 0);
+
+  // Handle overnight — kalau jam selesai < jam mulai berarti besok
+  const [hM, mM] = mulai.split(':').map(Number);
+  if(hS * 60 + mS < hM * 60 + mM) selesaiDate.setDate(selesaiDate.getDate() + 1);
+
+  const batasWaktu = new Date(selesaiDate.getTime() + 12 * 60 * 60 * 1000);
+  if(now > batasWaktu){
+    const batasStr = batasWaktu.toLocaleString('id-ID', {
+      day:'2-digit', month:'long', year:'numeric',
+      hour:'2-digit', minute:'2-digit'
+    });
+    showToast(`❌ Batas waktu input sudah lewat! Maksimal sampai ${batasStr}`);
+    return;
+  }
+
+  // Hitung durasi
+  let totalMenit = (hS*60+mS) - (hM*60+mM);
+  if(totalMenit < 0) totalMenit += 24*60;
+  if(istirahat) totalMenit = Math.max(0, totalMenit - 60);
+  const durasi = `${Math.floor(totalMenit/60)}j ${totalMenit%60}m`;
+  const istirahatLabel = istirahat ? 'Ya (dikurangi 1 jam)' : 'Tidak';
+
+  const timestamp = new Date().toLocaleDateString('id-ID') + ' ' +
+                    new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+
+  const payload = {
+    app: "lembur",
+    timestamp, nik, nama,
+    tanggal: formatTanggal(tgl),
+    jamMulai: mulai,
+    jamSelesai: selesai,
+    durasi, istirahat: istirahatLabel, alasan
+  };
+
+  // Cek duplikat dulu via Apps Script
+  setLoading(true);
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({...payload, app: 'cek_duplikat'})
+    });
+    const result = await res.json();
+
+    if(result.isDuplikat) {
+      // Tampilkan warning modal
+      document.getElementById('modal-detail').innerHTML =
+        `<span>NIK</span> ${nik}<br>
+         <span>Nama</span> ${nama}<br>
+         <span>Tanggal</span> ${formatTanggal(tgl)}<br>
+         <span>Jam</span> ${mulai} – ${selesai}`;
+      document.getElementById('modal-duplikat').classList.add('show');
+      pendingPayload = payload;
+      setLoading(false);
+      return;
+    }
+
+    // Tidak duplikat, langsung submit
+    await kirimData(payload);
+
+  } catch(err) {
+    showToast('Koneksi gagal — coba submit ulang');
+    setLoading(false);
+  }
+}
+
+async function kirimData(payload){
+  setLoading(true);
+  try{
+    const res = await fetch(APPS_SCRIPT_URL, {method:'POST', body:JSON.stringify(payload)});
+    const result = await res.json();
+    if(result.status==='ok'){
+      // Isi bukti card dari payload
+      document.getElementById('bukti-rows').innerHTML=`
+        <div class="bukti-row"><span class="bukti-lbl">NIK</span><span class="bukti-val">${payload.nik}</span></div>
+        <div class="bukti-row"><span class="bukti-lbl">Nama</span><span class="bukti-val">${payload.nama}</span></div>
+        <div class="bukti-row"><span class="bukti-lbl">Tanggal</span><span class="bukti-val">${payload.tanggal}</span></div>
+        <div class="bukti-row"><span class="bukti-lbl">Jam Mulai</span><span class="bukti-val">${payload.jamMulai}</span></div>
+        <div class="bukti-row"><span class="bukti-lbl">Jam Selesai</span><span class="bukti-val">${payload.jamSelesai}</span></div>
+        <div class="bukti-row"><span class="bukti-lbl">Istirahat</span><span class="bukti-val">${payload.istirahat}</span></div>
+        <div class="bukti-row"><span class="bukti-lbl">Durasi</span><span class="bukti-val">${payload.durasi}</span></div>
+        <div class="bukti-row"><span class="bukti-lbl">Alasan</span><span class="bukti-val">${payload.alasan}</span></div>
+      `;
+      document.getElementById('bukti-footer').textContent = 'Dikirim: ' + payload.timestamp;
+      document.getElementById('form-screen').style.display='none';
+      document.getElementById('success-screen').classList.add('show');
+    } else {
+      showToast('Gagal: '+(result.message||'Error tidak diketahui'));
+    }
+  } catch(err){
+    showToast('Koneksi gagal — coba submit ulang');
+  } finally{
+    setLoading(false);
+  }
+}
+
+async function downloadBukti(){
+  const btn = document.querySelector('.btn-download');
+  btn.textContent = '⏳ Menyiapkan...';
+  btn.disabled = true;
+  try {
+    const card = document.getElementById('bukti-card');
+    const canvas = await html2canvas(card, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      useCORS: true
+    });
+    const link = document.createElement('a');
+    const nik = document.querySelector('.bukti-val')?.textContent || 'lembur';
+    link.download = `bukti-lembur-${nik}-${Date.now()}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } catch(err) {
+    showToast('Gagal download, coba screenshot manual');
+  } finally {
+    btn.textContent = '⬇ Download Bukti (PNG)';
+    btn.disabled = false;
+  }
+}
+
+function resetForm(){
+  document.getElementById('nik').value='';
+  document.getElementById('nama').value='';
+  document.getElementById('tgl-lembur').value=today.toISOString().split('T')[0];
+  document.getElementById('jam-mulai').selectedIndex=0;
+  document.getElementById('jam-selesai').selectedIndex=0;
+  document.getElementById('alasan').value='';
+  document.getElementById('istirahat').checked=false;
+  document.getElementById('istirahat-wrap').style.display='none';
+  document.getElementById('durasi-box').style.display='none';
+  document.getElementById('form-screen').style.display='block';
+  document.getElementById('success-screen').classList.remove('show');
+}
+</script>
+</body>
+</html>
