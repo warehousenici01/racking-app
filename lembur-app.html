@@ -331,6 +331,9 @@
   });
 
   // FITUR: SUBMIT & MUNCULIN TIKET
+  // -----------------------------------------
+  // G. PROSES SUBMIT KE GOOGLE SHEETS & TIKET
+  // -----------------------------------------
   document.getElementById("form-lembur").addEventListener("submit", async function(e) {
     e.preventDefault(); 
     
@@ -343,14 +346,30 @@
     const formData = new FormData(form);
 
     try {
-      // 1. KIRIM DATA KE SPREADSHEET
-      await fetch(APPS_SCRIPT_URL, { method: 'POST', body: formData });
+      // 1. KIRIM KE GOOGLE SHEETS DAN TANGKAP BALASANNYA
+      let response = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: formData });
+      let resultText = await response.text();
       
-      // 2. BIKIN TIKET KALAU SUKSES
+      // 2. CEK APAKAH BACKEND NGIRIM PESAN ERROR (Misal: Duplikat)
+      if (resultText.includes("error") || resultText.includes("Error") || !resultText.includes("Success")) {
+        let pesanError = "Data ditolak oleh server!";
+        try {
+          // Coba ubah balasan teks jadi format JSON buat ngambil pesannya
+          let jsonRes = JSON.parse(resultText);
+          if (jsonRes.message) pesanError = jsonRes.message;
+        } catch(err) {
+          pesanError = resultText; // Kalau bukan JSON, tampilkan teks mentahnya
+        }
+        
+        // Kalau error, hentikan proses dan jangan tampilkan tiket!
+        alert("❌ GAGAL: " + pesanError);
+        return; 
+      }
+      
+      // 3. JIKA BENAR-BENAR BERHASIL MASUK SHEET, BARU SIAPKAN TIKET
       const inputNik = document.getElementById("nik").value;
       const inputNama = document.getElementById("nama").value;
       
-      // Ubah format tanggal YYYY-MM-DD jadi DD-MM-YYYY
       const inputTglAsli = document.getElementById("tanggal").value;
       const [tahun, bulan, hari] = inputTglAsli.split("-");
       const formatTglTiket = `${hari}-${bulan}-${tahun}`;
@@ -368,18 +387,18 @@
       document.getElementById("t-nama").innerText = inputNama;
       document.getElementById("t-nik").innerText = inputNik;
       document.getElementById("t-tgl").innerText = formatTglTiket;
-      document.getElementById("t-waktu").innerText = `${inputMulai} - ${inputSelesai} ${isIstirahat ? '(-1 Jam Istirahat)' : ''}`;
+      document.getElementById("t-waktu").innerText = `${inputMulai} s/d ${inputSelesai} ${isIstirahat ? '(Potong Istirahat)' : ''}`;
       document.getElementById("t-durasi").innerText = inputDurasi;
       document.getElementById("t-alasan").innerText = inputAlasan;
       document.getElementById("t-barcode").innerText = ticketId;
 
-      // Munculin tiket
+      // Munculin Tiket
       formWrapper.classList.add("hidden");
       ticketWrapper.classList.remove("hidden");
       ticketWrapper.classList.add("visible");
       
     } catch (error) {
-      alert("❌ REPORT GAGAL! Cek koneksi internet lu, Mas bre.");
+      alert("❌ GAGAL MENGIRIM DATA! Cek koneksi internet lu, Mas bre.");
     } finally {
       btnSubmit.innerHTML = textAsli;
       btnSubmit.disabled = false;
