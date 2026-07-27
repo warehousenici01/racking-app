@@ -282,6 +282,49 @@ function tutupModal(){
 }
 
 async function submitLembur(){
+  const daftarNikValid = [
+    "50106074", 
+    "50086295", 
+    "50053892",
+    "50042583",
+    "50042584", 
+    "50050016", 
+    "50053999",
+    "50111804",
+    "50045779", 
+    "50129633", 
+    "50052052",
+    "50042592",
+    "50047082", 
+    "50111639", 
+    "50179864",
+    "50180972",
+    "50045375", 
+    "50111075", 
+    "50047048",
+    "50046589",
+    "50048718", 
+    "50047176", 
+    "50042604",
+    "50048172",
+    "50054274", 
+    "50129628", 
+    "50142300",
+    "50178276",
+    "50046594", 
+    "50050018", 
+    "50135118",
+    "50181121",
+    "50042581", 
+    "50045378", 
+    "50145413",
+    "50042646"
+  ];
+  const nikUser = document.getElementById("nik").value.trim();
+  if (!daftarNikValid.includes(nikUser)) {
+    alert("❌ Yang bener aje bang, NIK gak terdaftar nih, coba cek lagi dah!");
+    return;
+  }
   const nik      = document.getElementById('nik').value.trim();
   const nama     = document.getElementById('nama').value.trim();
   const tgl      = document.getElementById('tgl-lembur').value;
