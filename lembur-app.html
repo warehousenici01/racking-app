@@ -148,6 +148,7 @@
 <!-- TIKET HASIL REPORT -->
 <div id="ticket-wrapper" class="hidden">
   
+  <!-- HANYA BAGIAN INI SAJA YANG NANTI DI-SCREENSHOT JADI PNG -->
   <div class="ticket-card" id="ticket-content">
     <div class="ticket-header">
       <h3>OVERTIME REPORT</h3>
@@ -184,14 +185,21 @@
     </div>
     
     <div class="barcode" id="t-barcode">OVERTIME</div>
+
+    <!-- WATERMARK TIKET (IKUT MASUK KE GAMBAR) -->
     <div style="text-align: center; margin-top: 25px; padding-top: 10px; border-top: 1px dashed #333; font-size: 9px; color: #8b949e; letter-spacing: 1px;">
-      SECURELY GENERATED VIA WEB APP © 2026 BY <span style="color: #c9d1d9;">RYL</span>
+      SECURELY GENERATED VIA WEB APP © 2026 BY RYL
     </div>
+  </div>
+  <!-- BATAS AKHIR ELEMEN YANG DI-SCREENSHOT -->
 
-  <button class="btn-submit btn-download" onclick="downloadTicket()"><i class="fas fa-download"></i> Unduh Tiket (PNG)</button>
-  <button class="btn-submit" onclick="location.reload()" style="background: #333; border-color: #555; color: #fff; text-shadow: none; box-shadow: none; margin-top: 10px;"><i class="fas fa-redo"></i> Input Laporan Baru</button>
+  <!-- TOMBOL DI LUAR TIKET (AMAN, NGGAK IKUT KECAPTURE) -->
+  <div style="margin-top: 20px;">
+    <button class="btn-submit btn-download" onclick="downloadTicket()"><i class="fas fa-download"></i> Unduh Tiket (PNG)</button>
+    <button class="btn-submit" onclick="location.reload()" style="background: #2a2a2a; border-color: #444; color: #00f3ff; margin-top: 10px;"><i class="fas fa-redo"></i> Input Laporan Baru</button>
+  </div>
+  
 </div>
-
 <script>
   // ==========================================
   // MASUKIN URL WEB APP GOOGLE SCRIPT LU DI SINI
