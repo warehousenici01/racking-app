@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lembur Form - Cyberpunk Edition</title>
+  <title>Form Overtime Report</title>
   
   <!-- Font Google & Icon -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
@@ -78,7 +78,7 @@
 <!-- FORM UTAMA -->
 <div class="form-container" id="form-wrapper">
   <h2 class="title">LEMBUR // ENTRY</h2>
-  <p class="subtitle">SYSTEM TERMINAL WAREHOUSE</p>
+  <p class="subtitle">Overtime Report Warehouse</p>
   
   <form id="form-lembur">
     
@@ -89,7 +89,7 @@
     </div>
     
     <div id="loading-nik" class="hidden" style="text-align: center; color: #00f3ff; font-size: 13px; font-weight: 600; margin-bottom: 20px; text-shadow: 0 0 5px #00f3ff;">
-      <i class="fas fa-spinner fa-spin"></i> SYSTEM MEMPROSES...
+      <i class="fas fa-spinner fa-spin"></i> LOADING...
     </div>
 
     <!-- 2. Form Detail Lembur (Awalnya Sembunyi) -->
@@ -141,13 +141,16 @@
     </div>
   </form>
 </div>
+<div style="text-align: center; margin-top: 20px; font-size: 11px; color: #555; letter-spacing: 2px;">
+  ENGINEERED BY <span style="color: #00f3ff; font-weight: bold; text-shadow: 0 0 5px rgba(0, 243, 255, 0.5);">RYL</span>
+</div>
 
 <!-- TIKET HASIL REPORT -->
 <div id="ticket-wrapper" class="hidden">
   
   <div class="ticket-card" id="ticket-content">
     <div class="ticket-header">
-      <h3>OVERTIME CLEARANCE</h3>
+      <h3>OVERTIME REPORT</h3>
       <p>WAREHOUSE TERMINAL SYSTEM</p>
     </div>
     
@@ -181,7 +184,9 @@
     </div>
     
     <div class="barcode" id="t-barcode">OVERTIME</div>
-  </div>
+    <div style="text-align: center; margin-top: 25px; padding-top: 10px; border-top: 1px dashed #333; font-size: 9px; color: #8b949e; letter-spacing: 1px;">
+      SECURELY GENERATED VIA WEB APP © 2026 BY <span style="color: #c9d1d9;">RYL</span>
+    </div>
 
   <button class="btn-submit btn-download" onclick="downloadTicket()"><i class="fas fa-download"></i> Unduh Tiket (PNG)</button>
   <button class="btn-submit" onclick="location.reload()" style="background: #333; border-color: #555; color: #fff; text-shadow: none; box-shadow: none; margin-top: 10px;"><i class="fas fa-redo"></i> Input Laporan Baru</button>
@@ -191,16 +196,48 @@
   // ==========================================
   // MASUKIN URL WEB APP GOOGLE SCRIPT LU DI SINI
   // ==========================================
-  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/GANTI_PAKE_URL_LU_YANG_ASLI/exec";
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxjomWN5hNamurxQclvM4TEoVlJedPpf1AlATsxOy-rCpMVDS5qqR0AdjYHpFSy8QlArg/exec";
 
   // ==========================================
   // DATABASE KARYAWAN LU (Bisa ditambahin terus)
   // ==========================================
   const databaseKaryawan = {
-    "50106074": "Rizki Y. Latief",
-    "50111075": "Parhan Baehaki",
-    "50123456": "Asep Sunandar"
-    // Format: "NIK" : "Nama Lengkap",
+    "50042646" : "Wuryanto",
+    "50086295" : "Adityo Dwi Sasongko",
+    "50053892" : "Enrico Gelsan",
+    "50042583" : "Apandi",
+    "50042584" : "Ejri Santiago ",
+    "50050016" : "A. Rofiq",
+    "50053999" : "Aldi Rakhmandani",
+    "50111804" : "Doni Hidayat",
+    "50045779" : "Agus Suparman",
+    "50129633" : "Ridwan Maulana",
+    "50052052" : "Akbar Ardiansyah",
+    "50042592" : "Sardi Purnama",
+    "50047082" : "Karya Dinata",
+    "50111639" : "Tri Sumbodro",
+    "50179864" : "Rendy Arifandi",
+    "50180972" : "Eko Kosasih",
+    "50045375" : "Widada",
+    "50111075" : "Parhan Baehaki",
+    "50047048" : "Muhammad Bilal",
+    "50046589" : "Fariz Rahmat Pamungkas",
+    "50048718" : "Deni Saepul",
+    "50047176" : "Sutoro",
+    "50042604" : "Eko Setyawan",
+    "50048172" : "Mulyadi",
+    "50054274" : "Bayu Rahman Sunardi",
+    "50129628" : "Nurdiansyah",
+    "50142300" : "Teguh Ariyanto",
+    "50178276" : "Abdul Aziz",
+    "50046594" : "Agus Effendi",
+    "50050018" : "Sobirin",
+    "50135118" : "Achmad Sa'adul Himam",
+    "50181121" : "Aditya Eka Nurwigian",
+    "50042581" : "Fitri Handayani",
+    "50045378" : "Fiki Satria Wilogo",
+    "50145413" : "Ahmad Muhidin",
+    "50106074" : "Rizki Yanuar Latief"
   };
 
   const formWrapper = document.getElementById("form-wrapper");
@@ -342,7 +379,7 @@
       ticketWrapper.classList.add("visible");
       
     } catch (error) {
-      alert("❌ GAGAL MENGIRIM DATA! Cek koneksi internet lu, Mas bre.");
+      alert("❌ REPORT GAGAL! Cek koneksi internet lu, Mas bre.");
     } finally {
       btnSubmit.innerHTML = textAsli;
       btnSubmit.disabled = false;
