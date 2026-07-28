@@ -342,6 +342,9 @@
   // -----------------------------------------
   // G. PROSES SUBMIT KE GOOGLE SHEETS & TIKET
   // -----------------------------------------
+  // -----------------------------------------
+  // G. PROSES SUBMIT KE GOOGLE SHEETS & TIKET
+  // -----------------------------------------
   document.getElementById("form-lembur").addEventListener("submit", async function(e) {
     e.preventDefault(); 
     
@@ -358,23 +361,31 @@
       let response = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: formData });
       let resultText = await response.text();
       
-      // 2. CEK APAKAH BACKEND NGIRIM PESAN ERROR (Misal: Duplikat)
-      if (resultText.includes("error") || resultText.includes("Error") || !resultText.includes("Success")) {
-        let pesanError = "Data ditolak oleh server!";
-        try {
-          // Coba ubah balasan teks jadi format JSON buat ngambil pesannya
-          let jsonRes = JSON.parse(resultText);
-          if (jsonRes.message) pesanError = jsonRes.message;
-        } catch(err) {
-          pesanError = resultText; // Kalau bukan JSON, tampilkan teks mentahnya
-        }
-        
-        // Kalau error, hentikan proses dan jangan tampilkan tiket!
-        alert("❌ GAGAL: " + pesanError);
-        return; 
+      // 2. TAHAP 1: FILTER ERROR / DUPLIKAT SECARA KETAT
+      // Kalau server teriak error atau duplikat, langsung blokir!
+      if (resultText.toLowerCase().includes("error") || resultText.toLowerCase().includes("duplikat") || resultText.toLowerCase().includes('{"status":"error"')) {
+        alert("❌ GAGAL: Data lembur ini sudah diinput sebelumnya atau ada error di server!");
+        btnSubmit.innerHTML = textAsli;
+        btnSubmit.disabled = false;
+        return; // STOP DI SINI! TIKET GAK BAKAL KELUAR
       }
       
-      // 3. JIKA BENAR-BENAR BERHASIL MASUK SHEET, BARU SIAPKAN TIKET
+      // 3. TAHAP 2: PASTIKAN RESPON DARI GOOGLE VALID
+      // Tiket HANYA keluar kalau balasan dari server terkonfirmasi berhasil melewati fungsi simpan data
+      let isSukses = resultText.includes("Success") || 
+                     resultText.includes("Backend Gudang Aktif") || 
+                     resultText.includes("docs.google.com") || 
+                     resultText.includes("drive-logo");
+
+      if (!isSukses) {
+        alert("❌ PERINGATAN: Tidak dapat memverifikasi status data. Koneksi ke server terputus.");
+        console.log("Respon Server:", resultText);
+        btnSubmit.innerHTML = textAsli;
+        btnSubmit.disabled = false;
+        return; // STOP DI SINI! TIKET GAK BAKAL KELUAR
+      }
+      
+      // 4. JIKA LOLOS SEMUA UJIAN DI ATAS, BARU CETAK TIKET (100% VALID)
       const inputNik = document.getElementById("nik").value;
       const inputNama = document.getElementById("nama").value;
       
@@ -401,7 +412,8 @@
       document.getElementById("t-barcode").innerText = ticketId;
 
       // Munculin Tiket
-      formWrapper.classList.add("hidden");
+      document.getElementById("form-wrapper").classList.add("hidden");
+      const ticketWrapper = document.getElementById("ticket-wrapper");
       ticketWrapper.classList.remove("hidden");
       ticketWrapper.classList.add("visible");
       
