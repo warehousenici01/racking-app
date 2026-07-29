@@ -474,19 +474,32 @@
 
       if (result.status === "success" && result.data.length > 0) {
         result.data.forEach(item => {
+          // Masukin data ke tabel (Tanggal | Mulai | Selesai | Durasi)
           tbody.innerHTML += `<tr>
-            <td style="padding: 8px; border-bottom: 1px solid #222;">${item.tanggal}</td>
-            <td style="padding: 8px; border-bottom: 1px solid #222;">${item.jam}</td>
-            <td style="padding: 8px; border-bottom: 1px solid #222; color: #00f3ff;">${item.durasi}</td>
+            <td style="padding: 6px; border-bottom: 1px solid #222;">${item.tanggal}</td>
+            <td style="padding: 6px; border-bottom: 1px solid #222;">${item.jamMulai || '-'}</td>
+            <td style="padding: 6px; border-bottom: 1px solid #222;">${item.jamSelesai || '-'}</td>
+            <td style="padding: 6px; border-bottom: 1px solid #222; color: #00f3ff;">${item.durasi}</td>
           </tr>`;
           
-          let matchJam = item.durasi.toLowerCase().match(/(\d+)\s*jam/);
-          let matchMenit = item.durasi.toLowerCase().match(/(\d+)\s*menit/);
-          totalMenitKeseluruhan += ((matchJam ? parseInt(matchJam[1]) : 0) * 60) + (matchMenit ? parseInt(matchMenit[1]) : 0);
+          // --- LOGIKA PINTAR BACA FORMAT "3j 0m" ATAU "3 Jam 0 Menit" ---
+          let durasiText = item.durasi.toLowerCase();
+          let matchJam = durasiText.match(/(\d+)\s*(j|jam)/);
+          let matchMenit = durasiText.match(/(\d+)\s*(m|menit)/);
+          
+          let jam = matchJam ? parseInt(matchJam[1], 10) : 0;
+          let menit = matchMenit ? parseInt(matchMenit[1], 10) : 0;
+          
+          totalMenitKeseluruhan += (jam * 60) + menit;
         });
-        document.getElementById("total-jam-pribadi").innerText = `${Math.floor(totalMenitKeseluruhan / 60)} Jam ${totalMenitKeseluruhan % 60} Menit`;
+
+        // Tampilkan Total Kalkulasi Jam
+        let hasilJam = Math.floor(totalMenitKeseluruhan / 60);
+        let hasilMenit = totalMenitKeseluruhan % 60;
+        document.getElementById("total-jam-pribadi").innerText = `${hasilJam} Jam ${hasilMenit} Menit`;
+
       } else {
-        tbody.innerHTML = "<tr><td colspan='3' style='text-align:center; padding:10px;'>Data tidak ditemukan di bulan ini.</td></tr>";
+        tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding:10px;'>Data tidak ditemukan di bulan ini.</td></tr>";
         document.getElementById("total-jam-pribadi").innerText = "0 Jam 0 Menit";
       }
     } catch (err) {
@@ -518,21 +531,22 @@
     </div>
     
     <div id="hasil-pribadi" class="hidden" style="margin-top: 15px; overflow-y: auto; flex-grow: 1;">
-      <table style="width: 100%; color: #fff; border-collapse: collapse; font-size: 11px; text-align: left;">
-        <thead style="background: #1a1a1a; color: #00f3ff;">
-          <tr>
-            <th style="padding: 8px; border-bottom: 1px solid #333;">Tanggal</th>
-            <th style="padding: 8px; border-bottom: 1px solid #333;">Jam</th>
-            <th style="padding: 8px; border-bottom: 1px solid #333;">Durasi</th>
-          </tr>
-        </thead>
-        <tbody id="isi-pribadi"></tbody>
-      </table>
-      <div style="margin-top: 15px; padding: 10px; background: #1a1a1a; border-radius: 5px; text-align: center; border: 1px dashed #00f3ff;">
-        <span style="color: #aaa; font-size: 11px;">Total Lembur:</span><br>
-        <strong id="total-jam-pribadi" style="color: #00f3ff; font-size: 16px;">0 Jam 0 Menit</strong>
+        <table style="width: 100%; color: #fff; border-collapse: collapse; font-size: 11px; text-align: left;">
+          <thead style="background: #1a1a1a; color: #00f3ff;">
+            <tr>
+              <th style="padding: 6px; border-bottom: 1px solid #333;">Tanggal</th>
+              <th style="padding: 6px; border-bottom: 1px solid #333;">Mulai</th>
+              <th style="padding: 6px; border-bottom: 1px solid #333;">Selesai</th>
+              <th style="padding: 6px; border-bottom: 1px solid #333;">Durasi</th>
+            </tr>
+          </thead>
+          <tbody id="isi-pribadi"></tbody>
+        </table>
+        <div style="margin-top: 15px; padding: 10px; background: #1a1a1a; border-radius: 5px; text-align: center; border: 1px dashed #00f3ff;">
+          <span style="color: #aaa; font-size: 11px;">Total Lembur:</span><br>
+          <strong id="total-jam-pribadi" style="color: #00f3ff; font-size: 16px;">0 Jam 0 Menit</strong>
+        </div>
       </div>
-    </div>
     <button onclick="tutupModalPribadi()" style="margin-top: 15px; width: 100%; background: #333; color: #fff; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">Tutup</button>
   </div>
 </div>
