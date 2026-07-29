@@ -79,7 +79,12 @@
 <div class="form-container" id="form-wrapper">
   <h2 class="title">LEMBUR // ENTRY</h2>
   <p class="subtitle">Overtime Report Warehouse</p>
-  
+  <!-- TOMBOL FITUR CEK RIWAYAT -->
+    <div style="text-align: center; margin-bottom: 20px;">
+      <button type="button" onclick="bukaModalPribadi()" style="background: #1e1e1e; border: 1px solid #00f3ff; color: #00f3ff; padding: 10px 15px; font-size: 12px; border-radius: 5px; cursor: pointer; width: 100%; max-width: 300px;">
+        <i class="fas fa-search"></i> Cek Overtime
+      </button>
+    </div>
   <form id="form-lembur">
     
     <!-- 1. Input NIK & Nama -->
@@ -338,10 +343,6 @@
     }
   });
 
-  // FITUR: SUBMIT & MUNCULIN TIKET
-  // -----------------------------------------
-  // G. PROSES SUBMIT KE GOOGLE SHEETS & TIKET
-  // -----------------------------------------
   // -----------------------------------------
   // G. PROSES SUBMIT KE GOOGLE SHEETS & TIKET
   // -----------------------------------------
@@ -425,7 +426,7 @@
     }
   });
 
-  // FITUR: DOWNLOAD PNG
+ // FITUR: DOWNLOAD PNG
   function downloadTicket() {
     const ticketElement = document.getElementById("ticket-content");
     html2canvas(ticketElement, {
@@ -439,7 +440,102 @@
       a.click();
     });
   }
+
+  // -----------------------------------------
+  // I. FUNGSI CEK RIWAYAT PRIBADI
+  // -----------------------------------------
+  function bukaModalPribadi() {
+    document.getElementById("modal-pribadi").classList.remove("hidden");
+    const formNik = document.getElementById("nik").value;
+    if (formNik) document.getElementById("cari-nik").value = formNik;
+    
+    const now = new Date();
+    document.getElementById("cari-bulan").value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    document.getElementById("hasil-pribadi").classList.add("hidden");
+  }
+
+  function tutupModalPribadi() { document.getElementById("modal-pribadi").classList.add("hidden"); }
+
+  async function cariDataPribadi() {
+    const nik = document.getElementById("cari-nik").value;
+    const bulan = document.getElementById("cari-bulan").value; 
+    
+    if (!nik || !bulan) { alert("Isi NIK dan Bulan dulu bre!"); return; }
+
+    document.getElementById("loading-pribadi").classList.remove("hidden");
+    document.getElementById("hasil-pribadi").classList.add("hidden");
+    const tbody = document.getElementById("isi-pribadi");
+    tbody.innerHTML = "";
+
+    try {
+      let response = await fetch(`${APPS_SCRIPT_URL}?action=cek_pribadi&nik=${nik}&bulan=${bulan}`);
+      let result = await response.json();
+      let totalMenitKeseluruhan = 0;
+
+      if (result.status === "success" && result.data.length > 0) {
+        result.data.forEach(item => {
+          tbody.innerHTML += `<tr>
+            <td style="padding: 8px; border-bottom: 1px solid #222;">${item.tanggal}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #222;">${item.jam}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #222; color: #00f3ff;">${item.durasi}</td>
+          </tr>`;
+          
+          let matchJam = item.durasi.toLowerCase().match(/(\d+)\s*jam/);
+          let matchMenit = item.durasi.toLowerCase().match(/(\d+)\s*menit/);
+          totalMenitKeseluruhan += ((matchJam ? parseInt(matchJam[1]) : 0) * 60) + (matchMenit ? parseInt(matchMenit[1]) : 0);
+        });
+        document.getElementById("total-jam-pribadi").innerText = `${Math.floor(totalMenitKeseluruhan / 60)} Jam ${totalMenitKeseluruhan % 60} Menit`;
+      } else {
+        tbody.innerHTML = "<tr><td colspan='3' style='text-align:center; padding:10px;'>Data tidak ditemukan di bulan ini.</td></tr>";
+        document.getElementById("total-jam-pribadi").innerText = "0 Jam 0 Menit";
+      }
+    } catch (err) {
+      alert("Koneksi error, coba lagi nanti!");
+    }
+    document.getElementById("loading-pribadi").classList.add("hidden");
+    document.getElementById("hasil-pribadi").classList.remove("hidden");
+  }
+
+// NAH, SCRIPT HARUS DITUTUP DI SINI MAS BRE 👇
 </script>
+
+<!-- MODAL CEK RIWAYAT PRIBADI HARUS ADA DI LUAR SCRIPT -->
+<div id="modal-pribadi" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;">
+  <div style="background: #121212; border: 1px solid #00f3ff; width: 100%; max-width: 400px; border-radius: 10px; padding: 20px; max-height: 85vh; display: flex; flex-direction: column;">
+    <h3 style="color: #00f3ff; margin-top: 0; text-align: center;">CEK LEMBURKU</h3>
+    <div style="margin-bottom: 15px;">
+      <label style="color: #aaa; font-size: 11px;">Masukkan NIK</label>
+      <input type="text" id="cari-nik" placeholder="Contoh: 50050016" inputmode="numeric" style="width: 100%; padding: 10px; margin-top: 5px; background: #1a1a1a; border: 1px solid #333; color: #fff; border-radius: 5px; box-sizing: border-box;">
+    </div>
+    <div style="margin-bottom: 15px;">
+      <label style="color: #aaa; font-size: 11px;">Pilih Bulan & Tahun</label>
+      <input type="month" id="cari-bulan" style="width: 100%; padding: 10px; margin-top: 5px; background: #1a1a1a; border: 1px solid #333; color: #fff; border-radius: 5px; box-sizing: border-box;">
+    </div>
+    <button onclick="cariDataPribadi()" style="width: 100%; background: #00f3ff; color: #000; font-weight: bold; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">Cari Data</button>
+    
+    <div id="loading-pribadi" class="hidden" style="text-align: center; color: #fff; padding: 20px;">
+      <i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Mencari data...
+    </div>
+    
+    <div id="hasil-pribadi" class="hidden" style="margin-top: 15px; overflow-y: auto; flex-grow: 1;">
+      <table style="width: 100%; color: #fff; border-collapse: collapse; font-size: 11px; text-align: left;">
+        <thead style="background: #1a1a1a; color: #00f3ff;">
+          <tr>
+            <th style="padding: 8px; border-bottom: 1px solid #333;">Tanggal</th>
+            <th style="padding: 8px; border-bottom: 1px solid #333;">Jam</th>
+            <th style="padding: 8px; border-bottom: 1px solid #333;">Durasi</th>
+          </tr>
+        </thead>
+        <tbody id="isi-pribadi"></tbody>
+      </table>
+      <div style="margin-top: 15px; padding: 10px; background: #1a1a1a; border-radius: 5px; text-align: center; border: 1px dashed #00f3ff;">
+        <span style="color: #aaa; font-size: 11px;">Total Lembur:</span><br>
+        <strong id="total-jam-pribadi" style="color: #00f3ff; font-size: 16px;">0 Jam 0 Menit</strong>
+      </div>
+    </div>
+    <button onclick="tutupModalPribadi()" style="margin-top: 15px; width: 100%; background: #333; color: #fff; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">Tutup</button>
+  </div>
+</div>
 
 </body>
 </html>
