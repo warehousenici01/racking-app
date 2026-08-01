@@ -362,10 +362,22 @@
       let response = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: formData });
       let resultText = await response.text();
       
-      // 2. TAHAP 1: FILTER ERROR / DUPLIKAT SECARA KETAT
-      // Kalau server teriak error atau duplikat, langsung blokir!
-      if (resultText.toLowerCase().includes("error") || resultText.toLowerCase().includes("duplikat") || resultText.toLowerCase().includes('{"status":"error"')) {
-        alert("❌ GAGAL: Data duplikat, data overtime ini sudah diinput sebelumnya");
+      // 2. TAHAP 1: FILTER ERROR / DUPLIKAT / TELAT LAPOR 
+      // Coba ubah resultText (string) jadi JSON biar bisa dibaca isi pesannya
+      let parsedResult;
+      try {
+        parsedResult = JSON.parse(resultText);
+      } catch (e) {
+        parsedResult = { status: "unknown", message: resultText }; // Kalau gagal parse, tangkep teks mentahnya
+      }
+
+      // Kalau statusnya error atau teks mentahnya mengandung kata duplikat/error
+      if (parsedResult.status === "error" || resultText.toLowerCase().includes("duplikat") || resultText.toLowerCase().includes("error")) {
+        
+        // Cek kalau backend ngirim pesan spesifik, kita tampilin itu. Kalau nggak, baru tampilin default duplikat.
+        let pesanError = parsedResult.message ? parsedResult.message : "❌ GAGAL: Terjadi kesalahan atau data duplikat.";
+        
+        alert(pesanError); // Ini yang bakal memunculkan pesan "DITOLAK! Lembur shift..."
         btnSubmit.innerHTML = textAsli;
         btnSubmit.disabled = false;
         return; // STOP DI SINI! TIKET GAK BAKAL KELUAR
