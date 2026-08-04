@@ -362,8 +362,7 @@
       let response = await fetch(APPS_SCRIPT_URL, { method: 'POST', body: formData });
       let resultText = await response.text();
       
-      // 2. TAHAP 1: FILTER ERROR / DUPLIKAT / TELAT LAPOR 
-      // Coba ubah resultText (string) jadi JSON biar bisa dibaca isi pesannya
+      // 2. BACA BALASANNYA (Bisa JSON dari satpam, bisa HTML keriting dari bug Google)
       let parsedResult;
       try {
         parsedResult = JSON.parse(resultText);
@@ -371,34 +370,38 @@
         parsedResult = { status: "unknown", message: resultText }; // Kalau gagal parse, tangkep teks mentahnya
       }
 
-      // Kalau statusnya error atau teks mentahnya mengandung kata duplikat/error
-      if (parsedResult.status === "error" || resultText.toLowerCase().includes("duplikat") || resultText.toLowerCase().includes("error")) {
+      // 3. TAHAP 1: TANGKAP PENOLAKAN DARI SATPAM (Error / Telat / Duplikat)
+      // Kita cek dulu, ada gak status error atau tulisan "duplikat"?
+      if (parsedResult.status === "error" || resultText.toLowerCase().includes("duplikat")) {
         
-        // Cek kalau backend ngirim pesan spesifik, kita tampilin itu. Kalau nggak, baru tampilin default duplikat.
         let pesanError = parsedResult.message ? parsedResult.message : "❌ GAGAL: Terjadi kesalahan atau data duplikat.";
         
-        alert(pesanError); // Ini yang bakal memunculkan pesan "DITOLAK! Lembur shift..."
+        alert(pesanError); // Munculin pesan penolakan
         btnSubmit.innerHTML = textAsli;
         btnSubmit.disabled = false;
         return; // STOP DI SINI! TIKET GAK BAKAL KELUAR
       }
       
-      // 3. TAHAP 2: PASTIKAN RESPON DARI GOOGLE VALID
-      // Tiket HANYA keluar kalau balasan dari server terkonfirmasi berhasil melewati fungsi simpan data
-      let isSukses = resultText.includes("Success") || 
-                     resultText.includes("Backend Gudang Aktif") || 
+      // 4. TAHAP 2: PASTIKAN DATA BENERAN MASUK (SUKSES)
+      // Ini nge-cover JSON sukses, teks "Success" lama, ATAU kode keriting bug Google
+      let isSukses = parsedResult.status === "success" || 
+                     resultText.includes("Success") || 
                      resultText.includes("docs.google.com") || 
-                     resultText.includes("drive-logo");
+                     resultText.includes("drive-logo") ||
+                     resultText.includes("<!DOCTYPE html>");
 
       if (!isSukses) {
-        alert("❌ PERINGATAN: Tidak dapat memverifikasi status data. Koneksi ke server terputus.");
+        alert("❌ PERINGATAN: Tidak dapat memverifikasi status data. Koneksi ke server terputus atau respon tidak dikenal.");
         console.log("Respon Server:", resultText);
         btnSubmit.innerHTML = textAsli;
         btnSubmit.disabled = false;
         return; // STOP DI SINI! TIKET GAK BAKAL KELUAR
       }
       
-      // 4. JIKA LOLOS SEMUA UJIAN DI ATAS, BARU CETAK TIKET (100% VALID)
+      // 5. MUNCULIN NOTIF SUKSES DULU SEBELUM CETAK
+      alert("✅ MANTAP! Data overtime berhasil disubmit. Tiket sedang disiapkan...");
+
+      // 6. JIKA LOLOS SEMUA UJIAN DI ATAS, BARU CETAK TIKET (100% VALID)
       const inputNik = document.getElementById("nik").value;
       const inputNama = document.getElementById("nama").value;
       
