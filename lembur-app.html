@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Form Overtime Report</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39+Text&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    /* =========================================
+       1. TEMA DARK NEON
+       ========================================= */
+    body { font-family: 'Poppins', sans-serif; background-color: #121212; color: #e0e0e0; margin: 0; padding: 20px; }
+    .form-container { max-width: 450px; margin: 20px auto; background: #1e1e1e; padding: 30px; border-radius: 15px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); }
+    .title { text-align: center; font-weight: 700; color: #00f3ff; text-shadow: 0 0 5px #00f3ff, 0 0 15px #00f3ff; margin-bottom: 5px; font-size: 26px; letter-spacing: 2px; }
+    .subtitle { text-align: center; color: #888; font-size: 13px; margin-bottom: 30px; letter-spacing: 1px; }
+
+    .input-group { margin-bottom: 20px; }
+    label { display: block; font-size: 13px; font-weight: 600; color: #bbb; margin-bottom: 8px; }
+    label i { margin-right: 8px; color: #00f3ff; text-shadow: 0 0 8px #00f3ff; }
+
+    input, select, textarea { width: 100%; padding: 12px 15px; background-color: #2a2a2a; color: #00f3ff; border: 1px solid #444; border-radius: 8px; font-size: 14px; transition: 0.3s; box-sizing: border-box; }
+    input:focus, select:focus, textarea:focus { border-color: #00f3ff; outline: none; box-shadow: 0 0 12px rgba(0, 243, 255, 0.4); background-color: #222; }
+    input[readonly] { background-color: #1a1a1a; color: #888; border-color: #333; cursor: not-allowed; }
+
+    .checkbox-container { display: flex; align-items: center; margin-bottom: 20px; cursor: pointer; font-size: 14px; color: #00f3ff; font-weight: 600; text-shadow: 0 0 5px rgba(0,243,255,0.5); }
+    .checkbox-container input { display: none; }
+    .checkmark { width: 22px; height: 22px; background: #2a2a2a; border: 2px solid #444; border-radius: 5px; margin-right: 10px; display: flex; justify-content: center; align-items: center; transition: 0.3s; }
+    .checkbox-container input:checked + .checkmark { background: #00f3ff; border-color: #00f3ff; box-shadow: 0 0 10px #00f3ff; }
+    .checkbox-container input:checked + .checkmark::after { content: '\f00c'; font-family: 'Font Awesome 6 Free'; font-weight: 900; color: #000; font-size: 14px; }
+
+    ::-webkit-calendar-picker-indicator { filter: invert(1) drop-shadow(0 0 3px #00f3ff); cursor: pointer; }
+
+    .btn-submit { width: 100%; padding: 14px; background-color: transparent; color: #00f3ff; border: 2px solid #00f3ff; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.3s; margin-top: 10px; text-shadow: 0 0 5px #00f3ff; box-shadow: 0 0 10px rgba(0, 243, 255, 0.2), inset 0 0 10px rgba(0, 243, 255, 0.1); }
+    .btn-submit:hover:not(:disabled) { background-color: #00f3ff; color: #000; text-shadow: none; box-shadow: 0 0 20px #00f3ff; transform: translateY(-2px); }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .hidden { display: none !important; }
+    .visible { display: block; animation: slideDown 0.5s ease forwards; }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* =========================================
+       2. TAMPILAN TIKET CYBERPUNK
+       ========================================= */
+    #ticket-wrapper { max-width: 450px; margin: 20px auto; }
+    .ticket-card { background: linear-gradient(135deg, #0d1117 0%, #161b22 100%); border: 2px dashed #00f3ff; border-radius: 10px; padding: 25px; position: relative; color: #c9d1d9; box-shadow: 0 0 25px rgba(0, 243, 255, 0.2); overflow: hidden; }
+    .ticket-card::before { content: "APPROVED"; position: absolute; top: 40px; right: -20px; transform: rotate(45deg); font-size: 20px; font-weight: 900; color: rgba(0, 243, 255, 0.1); letter-spacing: 5px; }
+
+    .ticket-header { text-align: center; border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 15px; }
+    .ticket-header h3 { margin: 0; color: #00f3ff; font-weight: 800; letter-spacing: 2px; }
+    .ticket-header p { margin: 5px 0 0 0; font-size: 11px; color: #8b949e; }
+    
+    .ticket-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13px; }
+    .ticket-label { color: #8b949e; }
+    .ticket-value { color: #fff; font-weight: 600; text-align: right; max-width: 60%; }
+    .ticket-value.neon { color: #00f3ff; text-shadow: 0 0 5px rgba(0,243,255,0.5); font-size: 15px;}
+    
+    .barcode { font-family: 'Libre Barcode 39 Text', cursive; font-size: 45px; text-align: center; color: #00f3ff; margin-top: 20px; text-shadow: 0 0 10px rgba(0, 243, 255, 0.4); }
+
+    .btn-download { background-color: #2ea043; border-color: #2ea043; color: white; margin-top: 20px; box-shadow: 0 0 10px rgba(46, 160, 67, 0.4); text-shadow: none;}
+    .btn-download:hover { background-color: #3fb950; box-shadow: 0 0 20px rgba(63, 185, 80, 0.6); }
+  </style>
+</head>
+<body>
+
+<div class="form-container" id="form-wrapper">
+  <h2 class="title">LEMBUR // ENTRY</h2>
+  <p class="subtitle">WHSP Overtime Report</p>
+  
+  <div style="text-align: center; margin-bottom: 20px;">
+    <button type="button" onclick="bukaModalPribadi()" style="background: #1e1e1e; border: 1px solid #00f3ff; color: #00f3ff; padding: 10px 15px; font-size: 12px; border-radius: 5px; cursor: pointer; width: 100%; max-width: 300px;">
+      <i class="fas fa-search"></i> Cek Overtime
+    </button>
+  </div>
+    
+  <form id="form-lembur">
+    <div class="input-group">
+      <label for="nik"><i class="fas fa-id-card"></i> Masukkan NIK</label>
+      <input type="text" id="nik" name="nik" placeholder="NIK" maxlength="8" inputmode="numeric" pattern="[0-9]*" autocomplete="off" required>
+    </div>
+    
+    <div id="loading-nik" class="hidden" style="text-align: center; color: #00f3ff; font-size: 13px; font-weight: 600; margin-bottom: 20px; text-shadow: 0 0 5px #00f3ff;">
+      <i class="fas fa-spinner fa-spin"></i> LOADING...
+    </div>
+
+    <div id="form-detail-lembur" class="hidden">
+      
+      <div class="input-group">
+        <label for="nama"><i class="fas fa-user"></i> Nama Karyawan</label>
+        <input type="text" id="nama" name="nama" readonly>
+      </div>
+      
+      <div class="input-group">
+        <label for="jabatan"><i class="fas fa-user-tag"></i> Jabatan / Posisi</label>
+        <input type="text" id="jabatan" name="jabatan" readonly style="color: #bbb; background-color: #1a1a1a; border-color: #333;">
+      </div>
+
+      <hr style="border: 0; border-top: 1px solid #333; margin: 25px 0;">
+      
+      <div class="input-group">
+        <label for="tanggal"><i class="fas fa-calendar-alt"></i> Tanggal Lembur </label>
+        <input type="date" id="tanggal" name="tanggal" required>
+      </div>
+
+      <div class="input-group">
+        <label for="jamMulai"><i class="fas fa-clock"></i> Jam Mulai</label>
+        <select id="jamMulai" name="jam_mulai" required></select>
+      </div>
+      
+      <div class="input-group">
+        <label for="jamSelesai"><i class="fas fa-history"></i> Jam Selesai</label>
+        <select id="jamSelesai" name="jam_selesai" required></select>
+      </div>
+
+      <label class="checkbox-container">
+        <input type="checkbox" id="isIstirahat" name="is_istirahat">
+        <span class="checkmark"></span>
+        Termasuk Jam Istirahat (Dikurangi 1 Jam)
+      </label>
+
+      <div class="input-group">
+        <label for="durasiDisplay"><i class="fas fa-stopwatch"></i> Total Durasi Lembur</label>
+        <input type="text" id="durasiDisplay" name="durasi_display" value="0 Jam 0 Menit" readonly style="font-weight: bold; color: #00f3ff; text-shadow: 0 0 5px rgba(0,243,255,0.4);">
+        <input type="hidden" id="durasiValue" name="durasi_value">
+      </div>
+
+      <!-- DROPDOWN JOBDESK PINTAR -->
+      <div class="input-group">
+        <label for="pilihKerjaan"><i class="fas fa-tasks"></i> Kategori Pekerjaan</label>
+        <select id="pilihKerjaan" name="pilih_kerjaan" required>
+          <option value="" disabled selected>-- Memuat Jobdesk... --</option>
+        </select>
+      </div>
+
+      <!-- KOTAK TEKS (HANYA MUNCUL KALAU MILIH OTHERS) -->
+      <div class="input-group hidden" id="grup-alasan-bebas">
+        <label for="alasan"><i class="fas fa-edit"></i> Keterangan Others (Wajib Isi)</label>
+        <textarea id="alasan" name="alasan" rows="3" placeholder="Tuliskan keterangan pekerjaan lainnya di sini..."></textarea>
+      </div>
+
+      <button type="submit" class="btn-submit"><i class="fas fa-satellite-dish"></i> TRANSMIT DATA</button>
+    </div>
+  </form>
+</div>
+
+<div style="text-align: center; margin-top: 20px; font-size: 11px; color: #555; letter-spacing: 2px;">
+  ENGINEERED BY <span style="color: #00f3ff; font-weight: bold; text-shadow: 0 0 5px rgba(0, 243, 255, 0.5);">RYL</span>
+</div>
+
+<div id="ticket-wrapper" class="hidden">
+  <div class="ticket-card" id="ticket-content">
+    <div class="ticket-header">
+      <h3>OVERTIME REPORT</h3>
+      <p>WHSP TERMINAL SYSTEM</p>
+    </div>
+    
+    <div class="ticket-row">
+      <span class="ticket-label">TICKET ID</span>
+      <span class="ticket-value" id="t-id">#WH-000</span>
+    </div>
+    <div class="ticket-row">
+      <span class="ticket-label">NAMA</span>
+      <span class="ticket-value" id="t-nama">-</span>
+    </div>
+    <div class="ticket-row">
+      <span class="ticket-label">NIK</span>
+      <span class="ticket-value" id="t-nik">-</span>
+    </div>
+    <div class="ticket-row">
+      <span class="ticket-label">TANGGAL</span>
+      <span class="ticket-value" id="t-tgl">-</span>
+    </div>
+    <div class="ticket-row">
+      <span class="ticket-label">WAKTU</span>
+      <span class="ticket-value" id="t-waktu">-</span>
+    </div>
+    <div class="ticket-row">
+      <span class="ticket-label">DURASI</span>
+      <span class="ticket-value neon" id="t-durasi">-</span>
+    </div>
+    <div class="ticket-row">
+      <span class="ticket-label">PEKERJAAN</span>
+      <span class="ticket-value" id="t-alasan" style="font-size: 11px;">-</span>
+    </div>
+    
+    <div class="barcode" id="t-barcode">OVERTIME</div>
+
+    <div style="text-align: center; margin-top: 25px; padding-top: 10px; border-top: 1px dashed #333; font-size: 9px; color: #8b949e; letter-spacing: 1px;">
+      SECURELY GENERATED VIA WEB APP © 2026 BY RYL
+    </div>
+  </div>
+
+  <div style="margin-top: 20px;">
+    <button class="btn-submit btn-download" onclick="downloadTicket()"><i class="fas fa-download"></i> Unduh Tiket (PNG)</button>
+    <button class="btn-submit" onclick="location.reload()" style="background: #2a2a2a; border-color: #444; color: #00f3ff; margin-top: 10px;"><i class="fas fa-redo"></i> Input Laporan Baru</button>
+  </div>
+</div>
+
+<script>
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxjomWN5hNamurxQclvM4TEoVlJedPpf1AlATsxOy-rCpMVDS5qqR0AdjYHpFSy8QlArg/exec";
+
+  // Kamus pekerjaan ditambah opsi "Others" di bawah Replacement
+  const daftarPekerjaan = {
+    "Admin FG": [
+      "Administrasi Loading Pengiriman FG",
+      "Prepare Stock Opname",
+      "Stock Opname Bulanan",
+      "Stock Opname Mingguan",
+      "Shipment FS, Racking Incoming FG, Racking FG Produksi",
+      "Replacement",
+      "Others"
+    ],
+    "Admin RMPM": [
+      "Administrasi Penerimaan FGRMPM dan Racking Income RMPM",
+      "Prepare Stock Opname",
+      "Stock Opname Bulanan",
+      "Stock Opname Mingguan",
+      "Replacement",
+      "Others"
+    ],
+    "Checker FG": [
+      "Loading Pengiriman FG",
+      "Prepare Stock Opname",
+      "Stock Opname Bulanan",
+      "Stock Opname Mingguan",
+      "Replacement",
+      "Others"
+    ],
+    "Checker RMPM": [
+      "Unloading RMPMFG dan Racking Income RMPM",
+      "Prepare Stock Opname",
+      "Stock Opname Bulanan",
+      "Stock Opname Mingguan",
+      "Replacement",
+      "Others"
+    ],
+    "Sect. Spv.": [
+      "Leader Loading FG dan Unloading RMPM",
+      "Administrasi Loading Pengiriman FG",
+      "Administrasi Unloading RMPM",
+      "Prepare Stock Opname",
+      "Stock Opname Bulanan",
+      "Stock Opname Mingguan",
+      "Replacement",
+      "Others"
+    ],
+    "Operator FG": [
+      "Loading Pengiriman FG",
+      "Racking FG Produksi dan Racking Incoming FG",
+      "Prepare Stock Opname",
+      "Stock Opname Bulanan",
+      "Stock Opname Mingguan",
+      "Replacement",
+      "Others"
+    ],
+    "Operator RMPM": [
+      "Reservasi Produksi",
+      "Racking Income RMPM",
+      "Prepare Stock Opname",
+      "Stock Opname Bulanan",
+      "Stock Opname Mingguan",
+      "Replacement",
+      "Others"
+    ],
+    "Stockist FG": [
+      "Loading Pengiriman FG",
+      "STB FG Produksi dan Racking Incoming FG",
+      "Prepare Stock Opname",
+      "Stock Opname Bulanan",
+      "Stock Opname Mingguan",
+      "Replacement",
+      "Others"
+    ],
+    "Stockist RMPM": [
+      "Reservasi Produksi",
+      "Racking Income RMPM",
+      "Prepare Stock Opname",
+      "Stock Opname Bulanan",
+      "Stock Opname Mingguan",
+      "Replacement",
+      "Others"
+    ],
+    "Admin to Warehouse Manager": [
+      "Administrasi Department",
+      "Prepare Stock Opname",
+      "Stock Opname Bulanan",
+      "Stock Opname Mingguan",
+      "Replacement",
+      "Others"
+    ],
+    "Admin WH Sparepart": [
+      "Support Produksi dan Maintenance Teknik",
+      "Prepare Stock Opname",
+      "Stock Opname Bulanan",
+      "Stock Opname Mingguan",
+      "Replacement",
+      "Others"
+    ]
+  };
+
+  const databaseKaryawan = {
+    "50042646" : { nama: "Wuryanto", posisi: "Sect. Spv. WH" },
+    "50086295" : { nama: "Adityo Dwi Sasongko", posisi: "Admin FG" },
+    "50053892" : { nama: "Enrico Gelsan", posisi: "Admin FG" },
+    "50042583" : { nama: "Apandi", posisi: "Operator FG" },
+    "50042584" : { nama: "Ejri Santiago", posisi: "Operator FG" },
+    "50050016" : { nama: "A. Rofiq", posisi: "Operator FG" },
+    "50053999" : { nama: "Aldi Rakhmandani", posisi: "Admin RMPM" },
+    "50111804" : { nama: "Doni Hidayat", posisi: "Stockist FG" },
+    "50045779" : { nama: "Agus Suparman", posisi: "Stockist FG" },
+    "50129633" : { nama: "Ridwan Maulana", posisi: "Stockist FG" },
+    "50052052" : { nama: "Akbar Ardiansyah", posisi: "Checker FG" },
+    "50042592" : { nama: "Sardi Purnama", posisi: "Operator RMPM" },
+    "50047082" : { nama: "Karya Dinata", posisi: "Stockist RMPM" },
+    "50111639" : { nama: "Tri Sumbodro", posisi: "Checker RMPM" },
+    "50179864" : { nama: "Rendy Arifandi", posisi: "Checker FG" },
+    "50180972" : { nama: "Eko Kosasih", posisi: "Checker FG" },
+    "50045375" : { nama: "Widada", posisi: "Sect. Spv. WH" },
+    "50111075" : { nama: "Parhan Baehaki", posisi: "Admin FG" },
+    "50047048" : { nama: "Muhammad Bilal", posisi: "Admin FG" },
+    "50046589" : { nama: "Fariz Rahmat Pamungkas", posisi: "Admin RMPM" },
+    "50048718" : { nama: "Deni Saepul", posisi: "Operator FG" },
+    "50047176" : { nama: "Sutoro", posisi: "Operator FG" },
+    "50042604" : { nama: "Eko Setyawan", posisi: "Operator FG" },
+    "50048172" : { nama: "Mulyadi", posisi: "Stockist FG" },
+    "50054274" : { nama: "Bayu Rahman Sunardi", posisi: "Stockist FG" },
+    "50129628" : { nama: "Nurdiansyah", posisi: "Stockist FG" },
+    "50142300" : { nama: "Teguh Ariyanto", posisi: "Checker FG" },
+    "50178276" : { nama: "Abdul Aziz", posisi: "Checker FG" },
+    "50046594" : { nama: "Agus Effendi", posisi: "Operator RMPM" },
+    "50050018" : { nama: "Sobirin", posisi: "Stockist RMPM" },
+    "50135118" : { nama: "Achmad Sa'adul Himam", posisi: "Checker RMPM" },
+    "50181121" : { nama: "Aditya Eka Nurwigian", posisi: "Checker FG" },
+    "50042581" : { nama: "Fitri Handayani", posisi: "Sect. Spv. WHSP" },
+    "50045378" : { nama: "Fiki Satria Wilogo", posisi: "Admin WH Sparepart" },
+    "50145413" : { nama: "Ahmad Muhidin", posisi: "Admin WH Sparepart" },
+    "50106074" : { nama: "Rizki Yanuar Latief", posisi: "Admin to Warehouse Manager" }
+  };
+
+  const formWrapper = document.getElementById("form-wrapper");
+  const ticketWrapper = document.getElementById("ticket-wrapper");
+
+  function setTanggalOtomatis() {
+    const tglInput = document.getElementById("tanggal");
+    let now = new Date();
+    let jamSekarang = now.getHours();
+    if (jamSekarang < 9) { now.setDate(now.getDate() - 1); }
+    const offset = now.getTimezoneOffset() * 60000;
+    const localDate = new Date(now.getTime() - offset).toISOString().split('T')[0];
+    tglInput.value = localDate;
+  }
+
+  function generateTimeOptions() {
+    let options = '<option value="" disabled selected>-- Pilih Jam --</option>';
+    for (let i = 0; i < 24; i++) {
+      let h = i.toString().padStart(2, '0');
+      options += `<option value="${h}:00">${h}:00</option>`;
+      options += `<option value="${h}:30">${h}:30</option>`;
+    }
+    document.getElementById("jamMulai").innerHTML = options;
+    document.getElementById("jamSelesai").innerHTML = options;
+  }
+
+  function hitungDurasi() {
+    const mulai = document.getElementById("jamMulai").value;
+    const selesai = document.getElementById("jamSelesai").value;
+    const isIstirahat = document.getElementById("isIstirahat").checked;
+    
+    if (!mulai || !selesai) return; 
+
+    let [h1, m1] = mulai.split(':').map(Number);
+    let [h2, m2] = selesai.split(':').map(Number);
+    let menitMulai = (h1 * 60) + m1;
+    let menitSelesai = (h2 * 60) + m2;
+
+    if (menitSelesai <= menitMulai) { menitSelesai += (24 * 60); }
+    let selisihMenit = menitSelesai - menitMulai;
+
+    if (isIstirahat) selisihMenit -= 60;
+    if (selisihMenit < 0) selisihMenit = 0;
+
+    let totalJam = Math.floor(selisihMenit / 60);
+    let sisaMenit = selisihMenit % 60;
+
+    document.getElementById("durasiDisplay").value = `${totalJam} Jam ${sisaMenit} Menit`;
+    document.getElementById("durasiValue").value = selisihMenit; 
+  }
+
+  document.getElementById("jamMulai").addEventListener("change", hitungDurasi);
+  document.getElementById("jamSelesai").addEventListener("change", hitungDurasi);
+  document.getElementById("isIstirahat").addEventListener("change", hitungDurasi);
+
+  document.getElementById("nik").addEventListener("input", function() {
+    const nikUser = this.value.trim();
+    const formDetail = document.getElementById("form-detail-lembur");
+    const loading = document.getElementById("loading-nik");
+    
+    if (nikUser.length < 8) { formDetail.className = "hidden"; return; }
+
+    if (nikUser.length === 8) {
+      loading.className = "visible"; 
+      setTimeout(() => {
+        loading.className = "hidden"; 
+        let dataKar = databaseKaryawan[nikUser];
+
+        if (dataKar) {
+          document.getElementById("nama").value = dataKar.nama;
+          document.getElementById("jabatan").value = dataKar.posisi;
+          
+          let listKerjaan = daftarPekerjaan[dataKar.posisi] || ["Replacement", "Others"];
+          let htmlOpsi = '<option value="" disabled selected>-- Pilih Pekerjaan --</option>';
+          listKerjaan.forEach(kerjaan => {
+            htmlOpsi += `<option value="${kerjaan}">${kerjaan}</option>`;
+          });
+          document.getElementById("pilihKerjaan").innerHTML = htmlOpsi;
+
+          setTanggalOtomatis(); 
+          generateTimeOptions(); 
+          formDetail.className = "visible"; 
+        } else {
+          alert("❌ AKSES DITOLAK: NIK tidak terdaftar di sistem!");
+          this.value = "";
+          formDetail.className = "hidden";
+        }
+      }, 600); 
+    }
+  });
+
+  // KOTAK TEKS HANYA MUNCUL KALAU MILIH "Others"
+  document.getElementById("pilihKerjaan").addEventListener("change", function() {
+    const grupAlasan = document.getElementById("grup-alasan-bebas");
+    const txtAlasan = document.getElementById("alasan");
+    
+    if (this.value === "Others") {
+      grupAlasan.classList.remove("hidden");
+      grupAlasan.classList.add("visible");
+      txtAlasan.required = true;
+    } else {
+      grupAlasan.classList.add("hidden");
+      grupAlasan.classList.remove("visible");
+      txtAlasan.required = false;
+      txtAlasan.value = ""; 
+    }
+  });
+
+  document.getElementById("form-lembur").addEventListener("submit", async function(e) {
+    e.preventDefault(); 
+    
+    const btnSubmit = document.querySelector("#form-detail-lembur .btn-submit");
+    const textAsli = btnSubmit.innerHTML;
+    btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> TRANSMITTING DATA...';
+    btnSubmit.disabled = true;
+
+    const form = document.getElementById("form-lembur");
+    const formData = new FormData(form);
+
+    try {
+      let payloadData = Object.fromEntries(formData); 
+      
+      let valDropdown = document.getElementById("pilihKerjaan").value;
+      let valKetik = document.getElementById("alasan").value;
+      
+      // Kalau pilih Others, kirim teks manualnya. Kalau selain itu, kirim nama pilihan dropdownnya.
+      if (valDropdown === "Others") {
+        payloadData.alasan = "Others: " + valKetik; 
+      } else {
+        payloadData.alasan = valDropdown; 
+      }
+      
+      let response = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        redirect: 'follow', 
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+        body: JSON.stringify(payloadData) 
+      });
+      
+      let resultText = await response.text();
+      let parsedResult = { status: "unknown" };
+      try { parsedResult = JSON.parse(resultText); } catch (e) { }
+
+      if (parsedResult.status === "error") {
+        alert(parsedResult.message || "❌ GAGAL: Terjadi kesalahan di sistem.");
+        btnSubmit.innerHTML = textAsli; btnSubmit.disabled = false; return; 
+      }
+      if (parsedResult.status === "duplikat") {
+        alert(parsedResult.message || "⚠️ DITOLAK: Data lembur duplikat nih, sudah diinput sebelumnya!");
+        btnSubmit.innerHTML = textAsli; btnSubmit.disabled = false; return; 
+      }
+      if (parsedResult.status !== "success" && parsedResult.status !== "unknown") {
+        alert("❌ Status nggak jelas. Cek sinyal internet lu, Mas bre.");
+        btnSubmit.innerHTML = textAsli; btnSubmit.disabled = false; return; 
+      }
+
+      alert("✅ MANTAP! Data lembur berhasil disubmit. Tiket sedang disiapkan...");
+
+      const inputNik = document.getElementById("nik").value;
+      const inputNama = document.getElementById("nama").value;
+      const inputTglAsli = document.getElementById("tanggal").value;
+      const [tahun, bulan, hari] = inputTglAsli.split("-");
+      const formatTglTiket = `${hari}-${bulan}-${tahun}`;
+
+      const inputMulai = document.getElementById("jamMulai").value;
+      const inputSelesai = document.getElementById("jamSelesai").value;
+      const inputDurasi = document.getElementById("durasiDisplay").value;
+      const isIstirahat = document.getElementById("isIstirahat").checked;
+      
+      const alasanTiket = payloadData.alasan; 
+
+      const d = new Date();
+      const ticketId = `WH-${d.getDate()}${d.getMonth()+1}-${d.getHours()}${d.getMinutes()}${d.getSeconds()}`;
+      
+      document.getElementById("t-id").innerText = ticketId;
+      document.getElementById("t-nama").innerText = inputNama;
+      document.getElementById("t-nik").innerText = inputNik;
+      document.getElementById("t-tgl").innerText = formatTglTiket;
+      document.getElementById("t-waktu").innerText = `${inputMulai} s/d ${inputSelesai} ${isIstirahat ? '(Potong Istirahat)' : ''}`;
+      document.getElementById("t-durasi").innerText = inputDurasi;
+      document.getElementById("t-alasan").innerText = alasanTiket;
+      document.getElementById("t-barcode").innerText = ticketId;
+
+      document.getElementById("form-wrapper").classList.add("hidden");
+      const ticketWrapper = document.getElementById("ticket-wrapper");
+      ticketWrapper.classList.remove("hidden");
+      ticketWrapper.classList.add("visible");
+      
+    } catch (error) {
+      alert("❌ KONEKSI PUTUS! Cek internet lu, Mas bre.");
+    } finally {
+      btnSubmit.innerHTML = textAsli;
+      btnSubmit.disabled = false;
+    }
+  });
+
+  function downloadTicket() {
+    const ticketElement = document.getElementById("ticket-content");
+    html2canvas(ticketElement, { backgroundColor: "#121212", scale: 2 }).then(canvas => {
+      let image = canvas.toDataURL("image/png");
+      let a = document.createElement("a");
+      a.href = image; a.download = `Tiket-Lembur-${document.getElementById("t-nik").innerText}.png`; a.click();
+    });
+  }
+
+  function bukaModalPribadi() {
+    document.getElementById("modal-pribadi").classList.remove("hidden");
+    const formNik = document.getElementById("nik").value;
+    if (formNik) document.getElementById("cari-nik").value = formNik;
+    const now = new Date();
+    document.getElementById("cari-bulan").value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    document.getElementById("hasil-pribadi").classList.add("hidden");
+  }
+  function tutupModalPribadi() { document.getElementById("modal-pribadi").classList.add("hidden"); }
+  
+  async function cariDataPribadi() {
+    const nik = document.getElementById("cari-nik").value;
+    const bulan = document.getElementById("cari-bulan").value; 
+    if (!nik || !bulan) { alert("Isi NIK dan Bulan dulu bre!"); return; }
+
+    document.getElementById("loading-pribadi").classList.remove("hidden");
+    document.getElementById("hasil-pribadi").classList.add("hidden");
+    const tbody = document.getElementById("isi-pribadi");
+    tbody.innerHTML = "";
+
+    try {
+      let response = await fetch(`${APPS_SCRIPT_URL}?action=cek_pribadi&nik=${nik}&bulan=${bulan}`);
+      let result = await response.json();
+      let totalMenitKeseluruhan = 0;
+
+      if (result.status === "success" && result.data.length > 0) {
+        result.data.forEach(item => {
+          tbody.innerHTML += `<tr>
+            <td style="padding: 6px; border-bottom: 1px solid #222;">${item.tanggal}</td>
+            <td style="padding: 6px; border-bottom: 1px solid #222;">${item.jamMulai || '-'}</td>
+            <td style="padding: 6px; border-bottom: 1px solid #222;">${item.jamSelesai || '-'}</td>
+            <td style="padding: 6px; border-bottom: 1px solid #222; color: #00f3ff;">${item.durasi}</td>
+          </tr>`;
+          
+          let durasiText = item.durasi.toLowerCase();
+          let matchJam = durasiText.match(/(\d+)\s*(j|jam)/);
+          let matchMenit = durasiText.match(/(\d+)\s*(m|menit)/);
+          let jam = matchJam ? parseInt(matchJam[1], 10) : 0;
+          let menit = matchMenit ? parseInt(matchMenit[1], 10) : 0;
+          totalMenitKeseluruhan += (jam * 60) + menit;
+        });
+
+        let hasilJam = Math.floor(totalMenitKeseluruhan / 60);
+        let hasilMenit = totalMenitKeseluruhan % 60;
+        document.getElementById("total-jam-pribadi").innerText = `${hasilJam} Jam ${hasilMenit} Menit`;
+      } else {
+        tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding:10px;'>Data tidak ditemukan di bulan ini.</td></tr>";
+        document.getElementById("total-jam-pribadi").innerText = "0 Jam 0 Menit";
+      }
+    } catch (err) {
+      alert("Koneksi error, coba lagi nanti!");
+    }
+    document.getElementById("loading-pribadi").classList.add("hidden");
+    document.getElementById("hasil-pribadi").classList.remove("hidden");
+  }
+</script>
+
+<div id="modal-pribadi" class="hidden" style="position: fixed; inset: 0; width: 100vw; height: 100dvh; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 15px; box-sizing: border-box;">
+  <div style="background: #121212; border: 1px solid #00f3ff; width: 100%; max-width: 400px; border-radius: 10px; padding: 15px; max-height: 85vh; display: flex; flex-direction: column; box-sizing: border-box; overflow-y: auto;">
+    <h3 style="color: #00f3ff; margin-top: 0; text-align: center;">CEK OVERTIME</h3>
+    <div style="margin-bottom: 15px;">
+      <label style="color: #aaa; font-size: 11px;">Masukkan NIK</label>
+      <input type="text" id="cari-nik" placeholder="..." inputmode="numeric" style="width: 100%; padding: 10px; margin-top: 5px; background: #1a1a1a; border: 1px solid #333; color: #fff; border-radius: 5px; box-sizing: border-box;">
+    </div>
+    <div style="margin-bottom: 15px;">
+      <label style="color: #aaa; font-size: 11px;">Pilih Bulan & Tahun</label>
+      <input type="month" id="cari-bulan" style="width: 100%; padding: 10px; margin-top: 5px; background: #1a1a1a; border: 1px solid #333; color: #fff; border-radius: 5px; box-sizing: border-box;">
+    </div>
+    <button onclick="cariDataPribadi()" style="width: 100%; background: #00f3ff; color: #000; font-weight: bold; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">Cari Data</button>
+    
+    <div id="loading-pribadi" class="hidden" style="text-align: center; color: #fff; padding: 20px;">
+      <i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Mencari data...
+    </div>
+    
+    <div id="hasil-pribadi" class="hidden" style="margin-top: 15px; overflow-y: auto; flex-grow: 1;">
+        <table style="width: 100%; color: #fff; border-collapse: collapse; font-size: 11px; text-align: left;">
+          <thead style="background: #1a1a1a; color: #00f3ff;">
+            <tr>
+              <th style="padding: 6px; border-bottom: 1px solid #333;">Tanggal</th>
+              <th style="padding: 6px; border-bottom: 1px solid #333;">Mulai</th>
+              <th style="padding: 6px; border-bottom: 1px solid #333;">Selesai</th>
+              <th style="padding: 6px; border-bottom: 1px solid #333;">Durasi</th>
+            </tr>
+          </thead>
+          <tbody id="isi-pribadi"></tbody>
+        </table>
+        <div style="margin-top: 15px; padding: 10px; background: #1a1a1a; border-radius: 5px; text-align: center; border: 1px dashed #00f3ff;">
+          <span style="color: #aaa; font-size: 11px;">Total Lembur:</span><br>
+          <strong id="total-jam-pribadi" style="color: #00f3ff; font-size: 16px;">0 Jam 0 Menit</strong>
+        </div>
+      </div>
+    <button onclick="tutupModalPribadi()" style="margin-top: 15px; width: 100%; background: #333; color: #fff; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">Tutup</button>
+  </div>
+</div>
+
+</body>
+</html>
