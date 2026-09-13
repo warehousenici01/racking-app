@@ -204,115 +204,58 @@
 <script>
   const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxjomWN5hNamurxQclvM4TEoVlJedPpf1AlATsxOy-rCpMVDS5qqR0AdjYHpFSy8QlArg/exec";
 
-  // Kamus pekerjaan ditambah opsi "Others" di bawah Replacement
+  // Kamus pekerjaan
   const daftarPekerjaan = {
     "Admin FG": [
-      "Administrasi Loading Pengiriman FG",
-      "Prepare Stock Opname",
-      "Stock Opname Bulanan",
-      "Stock Opname Mingguan",
-      "Shipment FS, Racking Incoming FG, Racking FG Produksi",
-      "Replacement",
-      "Others"
+      "Administrasi Loading Pengiriman FG", "Prepare Stock Opname", "Stock Opname Bulanan", 
+      "Stock Opname Mingguan", "Shipment FS, Racking Incoming FG, Racking FG Produksi", "Replacement", "Others"
     ],
     "Admin RMPM": [
-      "Administrasi Penerimaan RMPMFG dan Racking Incoming RMPM",
-      "Prepare Stock Opname",
-      "Stock Opname Bulanan",
-      "Stock Opname Mingguan",
-      "Replacement",
-      "Others"
+      "Administrasi Penerimaan RMPMFG dan Racking Incoming RMPM", "Prepare Stock Opname", 
+      "Stock Opname Bulanan", "Stock Opname Mingguan", "Replacement", "Others"
     ],
     "Checker FG": [
-      "Loading Pengiriman FG",
-      "Prepare Stock Opname",
-      "Stock Opname Bulanan",
-      "Stock Opname Mingguan",
-      "Replacement",
-      "Others"
+      "Loading Pengiriman FG", "Prepare Stock Opname", "Stock Opname Bulanan", 
+      "Stock Opname Mingguan", "Replacement", "Others"
     ],
     "Checker RMPM": [
-      "Unloading RMPMFG dan Racking Incoming RMPM",
-      "Prepare Stock Opname",
-      "Stock Opname Bulanan",
-      "Stock Opname Mingguan",
-      "Replacement",
-      "Others"
+      "Unloading RMPMFG dan Racking Incoming RMPM", "Prepare Stock Opname", 
+      "Stock Opname Bulanan", "Stock Opname Mingguan", "Replacement", "Others"
     ],
     "Sect. Spv. WH": [
-      "Leader Loading Pengiriman FG dan Unloading RMPMFG",
-      "Administrasi Loading Pengiriman FG",
-      "Administrasi Unloading RMPMFG",
-      "Prepare Stock Opname",
-      "Stock Opname Bulanan",
-      "Stock Opname Mingguan",
-      "Replacement",
-      "Others"
+      "Leader Loading Pengiriman FG dan Unloading RMPMFG", "Administrasi Loading Pengiriman FG", 
+      "Administrasi Unloading RMPMFG", "Prepare Stock Opname", "Stock Opname Bulanan", 
+      "Stock Opname Mingguan", "Replacement", "Others"
     ],
     "Operator FG": [
-      "Loading Pengiriman FG",
-      "Racking FG Produksi dan Racking Incoming FG",
-      "Prepare Stock Opname",
-      "Stock Opname Bulanan",
-      "Stock Opname Mingguan",
-      "Replacement",
-      "Others"
+      "Loading Pengiriman FG", "Racking FG Produksi dan Racking Incoming FG", 
+      "Prepare Stock Opname", "Stock Opname Bulanan", "Stock Opname Mingguan", "Replacement", "Others"
     ],
     "Operator RMPM": [
-      "Reservasi Produksi",
-      "Racking Incoming RMPM",
-      "Prepare Stock Opname",
-      "Stock Opname Bulanan",
-      "Stock Opname Mingguan",
-      "Replacement",
-      "Others"
+      "Reservasi Produksi", "Racking Incoming RMPM", "Prepare Stock Opname", 
+      "Stock Opname Bulanan", "Stock Opname Mingguan", "Replacement", "Others"
     ],
     "Stockist FG": [
-      "Loading Pengiriman FG",
-      "STB FG Produksi dan Racking Incoming FG",
-      "Prepare Stock Opname",
-      "Stock Opname Bulanan",
-      "Stock Opname Mingguan",
-      "Replacement",
-      "Others"
+      "Loading Pengiriman FG", "STB FG Produksi dan Racking Incoming FG", 
+      "Prepare Stock Opname", "Stock Opname Bulanan", "Stock Opname Mingguan", "Replacement", "Others"
     ],
     "Stockist RMPM": [
-      "Reservasi Produksi",
-      "Racking Incoming RMPM",
-      "Prepare Stock Opname",
-      "Stock Opname Bulanan",
-      "Stock Opname Mingguan",
-      "Replacement",
-      "Others"
+      "Reservasi Produksi", "Racking Incoming RMPM", "Prepare Stock Opname", 
+      "Stock Opname Bulanan", "Stock Opname Mingguan", "Replacement", "Others"
     ],
     "Admin to Warehouse Manager": [
-      "Administrasi Department",
-      "Prepare Stock Opname",
-      "Stock Opname Bulanan",
-      "Stock Opname Mingguan",
-      "Replacement",
-      "Others"
+      "Administrasi Department", "Prepare Stock Opname", "Stock Opname Bulanan", 
+      "Stock Opname Mingguan", "Replacement", "Others"
     ],
     "Admin WH Sparepart": [
-      "Support Produksi dan Maintenance Teknik",
-      "Prepare Stock Opname",
-      "Stock Opname Bulanan",
-      "Stock Opname Mingguan",
-      "Replacement",
-      "Others"
+      "Support Produksi dan Maintenance Teknik", "Prepare Stock Opname", 
+      "Stock Opname Bulanan", "Stock Opname Mingguan", "Replacement", "Others"
     ],
     "Sect. Spv. WHSP": [
-      "Support Produksi dan Maintenance Teknik",
-      "Prepare Stock Opname",
-      "Stock Opname Bulanan",
-      "Stock Opname Mingguan",
-      "Replacement",
-      "Others"
+      "Support Produksi dan Maintenance Teknik", "Prepare Stock Opname", 
+      "Stock Opname Bulanan", "Stock Opname Mingguan", "Replacement", "Others"
     ]
   };
-
-  const formWrapper = document.getElementById("form-wrapper");
-  const ticketWrapper = document.getElementById("ticket-wrapper");
 
   function setTanggalOtomatis() {
     const tglInput = document.getElementById("tanggal");
@@ -342,7 +285,6 @@
   
     if (!mulai || !selesai) return; 
 
-    // Kalau jam mulai dan selesai dipilih sama, set durasi jadi 0
     if (mulai === selesai) {
       document.getElementById("durasiDisplay").value = "0 Jam 0 Menit";
       document.getElementById("durasiValue").value = 0;
@@ -367,7 +309,12 @@
     document.getElementById("durasiValue").value = selisihMenit; 
   }
 
-  // --- TARIK DATA KARYAWAN DINAMIS DARI APPS SCRIPT ---
+  // Pasang event listener buat durasi otomatis
+  document.getElementById("jamMulai").addEventListener("change", hitungDurasi);
+  document.getElementById("jamSelesai").addEventListener("change", hitungDurasi);
+  document.getElementById("isIstirahat").addEventListener("change", hitungDurasi);
+
+  // Tarik data karyawan dinamis
   document.getElementById("nik").addEventListener("input", function() {
     const nikUser = this.value.trim();
     const formDetail = document.getElementById("form-detail-lembur");
@@ -410,14 +357,10 @@
     }
   });
 
-  // --- TAMBAHAN: KLIK LUAR MODAL BUAT NUTUP MODAL ---
   document.getElementById("modal-pribadi").addEventListener("click", function(e) {
-    if (e.target === this) {
-      tutupModalPribadi();
-    }
+    if (e.target === this) { tutupModalPribadi(); }
   });
 
-  // KOTAK TEKS HANYA MUNCUL KALAU MILIH "Others"
   document.getElementById("pilihKerjaan").addEventListener("change", function() {
     const grupAlasan = document.getElementById("grup-alasan-bebas");
     const txtAlasan = document.getElementById("alasan");
@@ -437,7 +380,8 @@
   document.getElementById("form-lembur").addEventListener("submit", async function(e) {
     e.preventDefault(); 
     
-    const btnSubmit = document.querySelector("#form-detail-lembur .btn-submit");
+    // Perbaikan target selector tombol submit biar gak null
+    const btnSubmit = document.querySelector("#form-detail-lembur button[type='submit']");
     const textAsli = btnSubmit.innerHTML;
     btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> TRANSMITTING DATA...';
     btnSubmit.disabled = true;
@@ -451,7 +395,6 @@
       let valDropdown = document.getElementById("pilihKerjaan").value;
       let valKetik = document.getElementById("alasan").value;
       
-      // Kalau pilih Others, kirim teks manualnya. Kalau selain itu, kirim nama pilihan dropdownnya.
       if (valDropdown === "Others") {
         payloadData.alasan = "Others: " + valKetik; 
       } else {
@@ -475,10 +418,6 @@
       }
       if (parsedResult.status === "duplikat") {
         alert(parsedResult.message || "⚠️ DITOLAK: Data lembur duplikat nih, sudah diinput sebelumnya!");
-        btnSubmit.innerHTML = textAsli; btnSubmit.disabled = false; return; 
-      }
-      if (parsedResult.status !== "success" && parsedResult.status !== "unknown") {
-        alert("❌ Status nggak jelas. Cek sinyal internet lu, Mas bre.");
         btnSubmit.innerHTML = textAsli; btnSubmit.disabled = false; return; 
       }
 
