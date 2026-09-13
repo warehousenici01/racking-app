@@ -309,167 +309,6 @@
     document.getElementById("durasiValue").value = selisihMenit; 
   }
 
-  // Pasang event listener buat durasi otomatis
-  document.getElementById("jamMulai").addEventListener("change", hitungDurasi);
-  document.getElementById("jamSelesai").addEventListener("change", hitungDurasi);
-  document.getElementById("isIstirahat").addEventListener("change", hitungDurasi);
-
-  // Tarik data karyawan dinamis
-  document.getElementById("nik").addEventListener("input", function() {
-    const nikUser = this.value.trim();
-    const formDetail = document.getElementById("form-detail-lembur");
-    const loading = document.getElementById("loading-nik");
-  
-    if (nikUser.length < 8) { formDetail.className = "hidden"; return; }
-
-    if (nikUser.length === 8) {
-      loading.className = "visible"; 
-    
-      fetch(`${APPS_SCRIPT_URL}?action=cek_karyawan&nik=${nikUser}`)
-        .then(response => response.json())
-        .then(result => {
-          loading.className = "hidden"; 
-        
-          if (result.status === "success") {
-            document.getElementById("nama").value = result.nama;
-            document.getElementById("jabatan").value = result.posisi;
-          
-            let listKerjaan = daftarPekerjaan[result.posisi] || ["Replacement", "Others"];
-            let htmlOpsi = '<option value="" disabled selected>-- Pilih Pekerjaan --</option>';
-            listKerjaan.forEach(kerjaan => {
-              htmlOpsi += `<option value="${kerjaan}">${kerjaan}</option>`;
-            });
-            document.getElementById("pilihKerjaan").innerHTML = htmlOpsi;
-
-            setTanggalOtomatis(); 
-            generateTimeOptions(); 
-            formDetail.className = "visible"; 
-          } else {
-            alert("❌ AKSES DITOLAK: NIK tidak terdaftar di sistem!");
-            this.value = "";
-            formDetail.className = "hidden";
-          }
-        })
-        .catch(error => {
-          loading.className = "hidden";
-          alert("❌ Gagal mengecek NIK. Periksa koneksi internet.");
-        });
-    }
-  });
-
-  document.getElementById("modal-pribadi").addEventListener("click", function(e) {
-    if (e.target === this) { tutupModalPribadi(); }
-  });
-
-  document.getElementById("pilihKerjaan").addEventListener("change", function() {
-    const grupAlasan = document.getElementById("grup-alasan-bebas");
-    const txtAlasan = document.getElementById("alasan");
-    
-    if (this.value === "Others") {
-      grupAlasan.classList.remove("hidden");
-      grupAlasan.classList.add("visible");
-      txtAlasan.required = true;
-    } else {
-      grupAlasan.classList.add("hidden");
-      grupAlasan.classList.remove("visible");
-      txtAlasan.required = false;
-      txtAlasan.value = ""; 
-    }
-  });
-
-  document.getElementById("form-lembur").addEventListener("submit", async function(e) {
-    e.preventDefault(); 
-    
-    // Perbaikan target selector tombol submit biar gak null
-    const btnSubmit = document.querySelector("#form-detail-lembur button[type='submit']");
-    const textAsli = btnSubmit.innerHTML;
-    btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> TRANSMITTING DATA...';
-    btnSubmit.disabled = true;
-
-    const form = document.getElementById("form-lembur");
-    const formData = new FormData(form);
-
-    try {
-      let payloadData = Object.fromEntries(formData); 
-      
-      let valDropdown = document.getElementById("pilihKerjaan").value;
-      let valKetik = document.getElementById("alasan").value;
-      
-      if (valDropdown === "Others") {
-        payloadData.alasan = "Others: " + valKetik; 
-      } else {
-        payloadData.alasan = valDropdown; 
-      }
-      
-      let response = await fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        redirect: 'follow', 
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-        body: JSON.stringify(payloadData) 
-      });
-      
-      let resultText = await response.text();
-      let parsedResult = { status: "unknown" };
-      try { parsedResult = JSON.parse(resultText); } catch (e) { }
-
-      if (parsedResult.status === "error") {
-        alert(parsedResult.message || "❌ GAGAL: Terjadi kesalahan di sistem.");
-        btnSubmit.innerHTML = textAsli; btnSubmit.disabled = false; return; 
-      }
-      if (parsedResult.status === "duplikat") {
-        alert(parsedResult.message || "⚠️ DITOLAK: Data lembur duplikat nih, sudah diinput sebelumnya!");
-        btnSubmit.innerHTML = textAsli; btnSubmit.disabled = false; return; 
-      }
-
-      alert("✅ MANTAP! Data lembur berhasil disubmit. Tiket sedang disiapkan...");
-
-      const inputNik = document.getElementById("nik").value;
-      const inputNama = document.getElementById("nama").value;
-      const inputTglAsli = document.getElementById("tanggal").value;
-      const [tahun, bulan, hari] = inputTglAsli.split("-");
-      const formatTglTiket = `${hari}-${bulan}-${tahun}`;
-
-      const inputMulai = document.getElementById("jamMulai").value;
-      const inputSelesai = document.getElementById("jamSelesai").value;
-      const inputDurasi = document.getElementById("durasiDisplay").value;
-      const isIstirahat = document.getElementById("isIstirahat").checked;
-      
-      const alasanTiket = payloadData.alasan; 
-
-      const d = new Date();
-      const ticketId = `WH-${d.getDate()}${d.getMonth()+1}-${d.getHours()}${d.getMinutes()}${d.getSeconds()}`;
-      
-      document.getElementById("t-id").innerText = ticketId;
-      document.getElementById("t-nama").innerText = inputNama;
-      document.getElementById("t-nik").innerText = inputNik;
-      document.getElementById("t-tgl").innerText = formatTglTiket;
-      document.getElementById("t-waktu").innerText = `${inputMulai} s/d ${inputSelesai} ${isIstirahat ? '(Potong Istirahat)' : ''}`;
-      document.getElementById("t-durasi").innerText = inputDurasi;
-      document.getElementById("t-alasan").innerText = alasanTiket;
-      document.getElementById("t-barcode").innerText = ticketId;
-
-      document.getElementById("form-wrapper").classList.add("hidden");
-      const ticketWrapper = document.getElementById("ticket-wrapper");
-      ticketWrapper.classList.remove("hidden");
-      ticketWrapper.classList.add("visible");
-      
-    } catch (error) {
-      alert("❌ KONEKSI PUTUS! Cek internet lu, Mas bre.");
-    } finally {
-      btnSubmit.innerHTML = textAsli;
-      btnSubmit.disabled = false;
-    }
-  });
-
-  function downloadTicket() {
-    const ticketElement = document.getElementById("ticket-content");
-    html2canvas(ticketElement, { backgroundColor: "#121212", scale: 2 }).then(canvas => {
-      let image = canvas.toDataURL("image/png");
-      let a = document.createElement("a");
-      a.href = image; a.download = `Tiket-Lembur-${document.getElementById("t-nik").innerText}.png`; a.click();
-    });
-  }
-
   function bukaModalPribadi() {
     document.getElementById("modal-pribadi").classList.remove("hidden");
     const formNik = document.getElementById("nik").value;
@@ -525,6 +364,178 @@
     document.getElementById("loading-pribadi").classList.add("hidden");
     document.getElementById("hasil-pribadi").classList.remove("hidden");
   }
+
+  function downloadTicket() {
+    const ticketElement = document.getElementById("ticket-content");
+    html2canvas(ticketElement, { backgroundColor: "#121212", scale: 2 }).then(canvas => {
+      let image = canvas.toDataURL("image/png");
+      let a = document.createElement("a");
+      a.href = image; a.download = `Tiket-Lembur-${document.getElementById("t-nik").innerText}.png`; a.click();
+    });
+  }
+
+  // =========================================
+  // SEMUA addEventListener DIPINDAH KE SINI
+  // supaya jalan setelah SELURUH HTML (termasuk
+  // div #modal-pribadi di bagian bawah) sudah dimuat.
+  // Ini yang memperbaiki bug "TRANSMIT DATA" nge-refresh
+  // halaman & data gak masuk ke Google Sheets.
+  // =========================================
+  document.addEventListener("DOMContentLoaded", function() {
+
+    // Pasang event listener buat durasi otomatis
+    document.getElementById("jamMulai").addEventListener("change", hitungDurasi);
+    document.getElementById("jamSelesai").addEventListener("change", hitungDurasi);
+    document.getElementById("isIstirahat").addEventListener("change", hitungDurasi);
+
+    // Tarik data karyawan dinamis
+    document.getElementById("nik").addEventListener("input", function() {
+      const nikUser = this.value.trim();
+      const formDetail = document.getElementById("form-detail-lembur");
+      const loading = document.getElementById("loading-nik");
+    
+      if (nikUser.length < 8) { formDetail.className = "hidden"; return; }
+
+      if (nikUser.length === 8) {
+        loading.className = "visible"; 
+      
+        fetch(`${APPS_SCRIPT_URL}?action=cek_karyawan&nik=${nikUser}`)
+          .then(response => response.json())
+          .then(result => {
+            loading.className = "hidden"; 
+          
+            if (result.status === "success") {
+              document.getElementById("nama").value = result.nama;
+              document.getElementById("jabatan").value = result.posisi;
+            
+              let listKerjaan = daftarPekerjaan[result.posisi] || ["Replacement", "Others"];
+              let htmlOpsi = '<option value="" disabled selected>-- Pilih Pekerjaan --</option>';
+              listKerjaan.forEach(kerjaan => {
+                htmlOpsi += `<option value="${kerjaan}">${kerjaan}</option>`;
+              });
+              document.getElementById("pilihKerjaan").innerHTML = htmlOpsi;
+
+              setTanggalOtomatis(); 
+              generateTimeOptions(); 
+              formDetail.className = "visible"; 
+            } else {
+              alert("❌ AKSES DITOLAK: NIK tidak terdaftar di sistem!");
+              this.value = "";
+              formDetail.className = "hidden";
+            }
+          })
+          .catch(error => {
+            loading.className = "hidden";
+            alert("❌ Gagal mengecek NIK. Periksa koneksi internet.");
+          });
+      }
+    });
+
+    document.getElementById("modal-pribadi").addEventListener("click", function(e) {
+      if (e.target === this) { tutupModalPribadi(); }
+    });
+
+    document.getElementById("pilihKerjaan").addEventListener("change", function() {
+      const grupAlasan = document.getElementById("grup-alasan-bebas");
+      const txtAlasan = document.getElementById("alasan");
+      
+      if (this.value === "Others") {
+        grupAlasan.classList.remove("hidden");
+        grupAlasan.classList.add("visible");
+        txtAlasan.required = true;
+      } else {
+        grupAlasan.classList.add("hidden");
+        grupAlasan.classList.remove("visible");
+        txtAlasan.required = false;
+        txtAlasan.value = ""; 
+      }
+    });
+
+    document.getElementById("form-lembur").addEventListener("submit", async function(e) {
+      e.preventDefault(); 
+      
+      // Perbaikan target selector tombol submit biar gak null
+      const btnSubmit = document.querySelector("#form-detail-lembur button[type='submit']");
+      const textAsli = btnSubmit.innerHTML;
+      btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> TRANSMITTING DATA...';
+      btnSubmit.disabled = true;
+
+      const form = document.getElementById("form-lembur");
+      const formData = new FormData(form);
+
+      try {
+        let payloadData = Object.fromEntries(formData); 
+        
+        let valDropdown = document.getElementById("pilihKerjaan").value;
+        let valKetik = document.getElementById("alasan").value;
+        
+        if (valDropdown === "Others") {
+          payloadData.alasan = "Others: " + valKetik; 
+        } else {
+          payloadData.alasan = valDropdown; 
+        }
+        
+        let response = await fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          redirect: 'follow', 
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+          body: JSON.stringify(payloadData) 
+        });
+        
+        let resultText = await response.text();
+        let parsedResult = { status: "unknown" };
+        try { parsedResult = JSON.parse(resultText); } catch (e) { }
+
+        if (parsedResult.status === "error") {
+          alert(parsedResult.message || "❌ GAGAL: Terjadi kesalahan di sistem.");
+          btnSubmit.innerHTML = textAsli; btnSubmit.disabled = false; return; 
+        }
+        if (parsedResult.status === "duplikat") {
+          alert(parsedResult.message || "⚠️ DITOLAK: Data lembur duplikat nih, sudah diinput sebelumnya!");
+          btnSubmit.innerHTML = textAsli; btnSubmit.disabled = false; return; 
+        }
+
+        alert("✅ MANTAP! Data lembur berhasil disubmit. Tiket sedang disiapkan...");
+
+        const inputNik = document.getElementById("nik").value;
+        const inputNama = document.getElementById("nama").value;
+        const inputTglAsli = document.getElementById("tanggal").value;
+        const [tahun, bulan, hari] = inputTglAsli.split("-");
+        const formatTglTiket = `${hari}-${bulan}-${tahun}`;
+
+        const inputMulai = document.getElementById("jamMulai").value;
+        const inputSelesai = document.getElementById("jamSelesai").value;
+        const inputDurasi = document.getElementById("durasiDisplay").value;
+        const isIstirahat = document.getElementById("isIstirahat").checked;
+        
+        const alasanTiket = payloadData.alasan; 
+
+        const d = new Date();
+        const ticketId = `WH-${d.getDate()}${d.getMonth()+1}-${d.getHours()}${d.getMinutes()}${d.getSeconds()}`;
+        
+        document.getElementById("t-id").innerText = ticketId;
+        document.getElementById("t-nama").innerText = inputNama;
+        document.getElementById("t-nik").innerText = inputNik;
+        document.getElementById("t-tgl").innerText = formatTglTiket;
+        document.getElementById("t-waktu").innerText = `${inputMulai} s/d ${inputSelesai} ${isIstirahat ? '(Potong Istirahat)' : ''}`;
+        document.getElementById("t-durasi").innerText = inputDurasi;
+        document.getElementById("t-alasan").innerText = alasanTiket;
+        document.getElementById("t-barcode").innerText = ticketId;
+
+        document.getElementById("form-wrapper").classList.add("hidden");
+        const ticketWrapper = document.getElementById("ticket-wrapper");
+        ticketWrapper.classList.remove("hidden");
+        ticketWrapper.classList.add("visible");
+        
+      } catch (error) {
+        alert("❌ KONEKSI PUTUS! Cek internet lu, Mas bre.");
+      } finally {
+        btnSubmit.innerHTML = textAsli;
+        btnSubmit.disabled = false;
+      }
+    });
+
+  });
 </script>
 
 <div id="modal-pribadi" class="hidden" style="position: fixed; inset: 0; width: 100vw; height: 100dvh; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 15px; box-sizing: border-box;">
