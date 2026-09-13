@@ -311,45 +311,6 @@
     ]
   };
 
-  const databaseKaryawan = {
-    "50042646" : { nama: "Wuryanto", posisi: "Sect. Spv. WH" },
-    "50086295" : { nama: "Adityo Dwi Sasongko", posisi: "Admin FG" },
-    "50053892" : { nama: "Enrico Gelsan", posisi: "Admin FG" },
-    "50042583" : { nama: "Apandi", posisi: "Operator FG" },
-    "50042584" : { nama: "Ejri Santiago", posisi: "Operator FG" },
-    "50050016" : { nama: "A. Rofiq", posisi: "Operator FG" },
-    "50053999" : { nama: "Aldi Rakhmandani", posisi: "Admin RMPM" },
-    "50111804" : { nama: "Doni Hidayat", posisi: "Operator FG" },
-    "50045779" : { nama: "Agus Suparman", posisi: "Stockist FG" },
-    "50129633" : { nama: "Ridwan Maulana", posisi: "Stockist FG" },
-    "50052052" : { nama: "Akbar Ardiansyah", posisi: "Checker FG" },
-    "50042592" : { nama: "Sardi Purnama", posisi: "Operator RMPM" },
-    "50047082" : { nama: "Karya Dinata", posisi: "Stockist RMPM" },
-    "50111639" : { nama: "Tri Sumbodro", posisi: "Checker RMPM" },
-    "50179864" : { nama: "Rendy Arifandi", posisi: "Checker FG" },
-    "50180972" : { nama: "Eko Kosasih", posisi: "Checker FG" },
-    "50045375" : { nama: "Widada", posisi: "Sect. Spv. WH" },
-    "50111075" : { nama: "Parhan Baehaki", posisi: "Admin FG" },
-    "50047048" : { nama: "Muhammad Bilal", posisi: "Admin FG" },
-    "50046589" : { nama: "Fariz Rahmat Pamungkas", posisi: "Admin RMPM" },
-    "50048718" : { nama: "Deni Saepul", posisi: "Operator FG" },
-    "50047176" : { nama: "Sutoro", posisi: "Operator FG" },
-    "50042604" : { nama: "Eko Setyawan", posisi: "Operator FG" },
-    "50048172" : { nama: "Mulyadi", posisi: "Stockist FG" },
-    "50054274" : { nama: "Bayu Rahman Sunardi", posisi: "Stockist FG" },
-    "50129628" : { nama: "Nurdiansyah", posisi: "Stockist FG" },
-    "50142300" : { nama: "Teguh Ariyanto", posisi: "Checker RMPM" },
-    "50178276" : { nama: "Abdul Aziz", posisi: "Checker FG" },
-    "50046594" : { nama: "Agus Effendi", posisi: "Operator RMPM" },
-    "50050018" : { nama: "Sobirin", posisi: "Stockist RMPM" },
-    "50135118" : { nama: "Achmad Sa'adul Himam", posisi: "Stockist FG" },
-    "50181121" : { nama: "Aditya Eka Nurwigian", posisi: "Checker FG" },
-    "50042581" : { nama: "Fitri Handayani", posisi: "Sect. Spv. WHSP" },
-    "50045378" : { nama: "Fiki Satria Wilogo", posisi: "Admin WH Sparepart" },
-    "50145413" : { nama: "Ahmad Muhidin", posisi: "Admin WH Sparepart" },
-    "50106074" : { nama: "Rizki Yanuar Latief", posisi: "Admin to Warehouse Manager" }
-  };
-
   const formWrapper = document.getElementById("form-wrapper");
   const ticketWrapper = document.getElementById("ticket-wrapper");
 
@@ -378,8 +339,15 @@
     const mulai = document.getElementById("jamMulai").value;
     const selesai = document.getElementById("jamSelesai").value;
     const isIstirahat = document.getElementById("isIstirahat").checked;
-    
+  
     if (!mulai || !selesai) return; 
+
+    // Kalau jam mulai dan selesai dipilih sama, set durasi jadi 0
+    if (mulai === selesai) {
+      document.getElementById("durasiDisplay").value = "0 Jam 0 Menit";
+      document.getElementById("durasiValue").value = 0;
+      return;
+    }
 
     let [h1, m1] = mulai.split(':').map(Number);
     let [h2, m2] = selesai.split(':').map(Number);
@@ -399,43 +367,53 @@
     document.getElementById("durasiValue").value = selisihMenit; 
   }
 
-  document.getElementById("jamMulai").addEventListener("change", hitungDurasi);
-  document.getElementById("jamSelesai").addEventListener("change", hitungDurasi);
-  document.getElementById("isIstirahat").addEventListener("change", hitungDurasi);
-
+  // --- TARIK DATA KARYAWAN DINAMIS DARI APPS SCRIPT ---
   document.getElementById("nik").addEventListener("input", function() {
     const nikUser = this.value.trim();
     const formDetail = document.getElementById("form-detail-lembur");
     const loading = document.getElementById("loading-nik");
-    
+  
     if (nikUser.length < 8) { formDetail.className = "hidden"; return; }
 
     if (nikUser.length === 8) {
       loading.className = "visible"; 
-      setTimeout(() => {
-        loading.className = "hidden"; 
-        let dataKar = databaseKaryawan[nikUser];
-
-        if (dataKar) {
-          document.getElementById("nama").value = dataKar.nama;
-          document.getElementById("jabatan").value = dataKar.posisi;
+    
+      fetch(`${APPS_SCRIPT_URL}?action=cek_karyawan&nik=${nikUser}`)
+        .then(response => response.json())
+        .then(result => {
+          loading.className = "hidden"; 
+        
+          if (result.status === "success") {
+            document.getElementById("nama").value = result.nama;
+            document.getElementById("jabatan").value = result.posisi;
           
-          let listKerjaan = daftarPekerjaan[dataKar.posisi] || ["Replacement", "Others"];
-          let htmlOpsi = '<option value="" disabled selected>-- Pilih Pekerjaan --</option>';
-          listKerjaan.forEach(kerjaan => {
-            htmlOpsi += `<option value="${kerjaan}">${kerjaan}</option>`;
-          });
-          document.getElementById("pilihKerjaan").innerHTML = htmlOpsi;
+            let listKerjaan = daftarPekerjaan[result.posisi] || ["Replacement", "Others"];
+            let htmlOpsi = '<option value="" disabled selected>-- Pilih Pekerjaan --</option>';
+            listKerjaan.forEach(kerjaan => {
+              htmlOpsi += `<option value="${kerjaan}">${kerjaan}</option>`;
+            });
+            document.getElementById("pilihKerjaan").innerHTML = htmlOpsi;
 
-          setTanggalOtomatis(); 
-          generateTimeOptions(); 
-          formDetail.className = "visible"; 
-        } else {
-          alert("❌ AKSES DITOLAK: NIK tidak terdaftar di sistem!");
-          this.value = "";
-          formDetail.className = "hidden";
-        }
-      }, 600); 
+            setTanggalOtomatis(); 
+            generateTimeOptions(); 
+            formDetail.className = "visible"; 
+          } else {
+            alert("❌ AKSES DITOLAK: NIK tidak terdaftar di sistem!");
+            this.value = "";
+            formDetail.className = "hidden";
+          }
+        })
+        .catch(error => {
+          loading.className = "hidden";
+          alert("❌ Gagal mengecek NIK. Periksa koneksi internet.");
+        });
+    }
+  });
+
+  // --- TAMBAHAN: KLIK LUAR MODAL BUAT NUTUP MODAL ---
+  document.getElementById("modal-pribadi").addEventListener("click", function(e) {
+    if (e.target === this) {
+      tutupModalPribadi();
     }
   });
 
