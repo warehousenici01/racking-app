@@ -44,6 +44,11 @@
     .visible { display: block; animation: slideDown 0.5s ease forwards; }
     @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
+    @keyframes alertPop {
+      from { opacity: 0; transform: scale(0.9) translateY(12px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
     /* =========================================
        2. TAMPILAN TIKET CYBERPUNK
        ========================================= */
@@ -257,6 +262,45 @@
     ]
   };
 
+  // CUSTOM NOTIFICATION SYSTEM
+  function showCustomAlert(type, title, message) {
+    const modal = document.getElementById("custom-alert-modal");
+    const titleEl = document.getElementById("alert-title");
+    const msgEl = document.getElementById("alert-message");
+    const iconEl = document.getElementById("alert-icon");
+    const iconContainer = document.getElementById("alert-icon-container");
+    const btnEl = document.getElementById("alert-btn");
+
+    titleEl.innerText = title;
+    msgEl.innerText = message;
+
+    if (type === "error" || type === "duplikat") {
+      iconContainer.style.background = "rgba(239, 68, 68, 0.15)";
+      iconContainer.style.color = "#ef4444";
+      iconEl.className = "fas fa-triangle-exclamation";
+      btnEl.style.background = "#ef4444";
+      btnEl.style.color = "#fff";
+    } else if (type === "warning") {
+      iconContainer.style.background = "rgba(245, 158, 11, 0.15)";
+      iconContainer.style.color = "#f59e0b";
+      iconEl.className = "fas fa-clock-rotate-left";
+      btnEl.style.background = "#f59e0b";
+      btnEl.style.color = "#000";
+    } else {
+      iconContainer.style.background = "rgba(0, 243, 255, 0.15)";
+      iconContainer.style.color = "#00f3ff";
+      iconEl.className = "fas fa-circle-check";
+      btnEl.style.background = "#00f3ff";
+      btnEl.style.color = "#000";
+    }
+
+    modal.classList.remove("hidden");
+  }
+
+  function tutupCustomAlert() {
+    document.getElementById("custom-alert-modal").classList.add("hidden");
+  }
+
   function setTanggalOtomatis() {
     const tglInput = document.getElementById("tanggal");
     let now = new Date();
@@ -322,7 +366,7 @@
   async function cariDataPribadi() {
     const nik = document.getElementById("cari-nik").value;
     const bulan = document.getElementById("cari-bulan").value; 
-    if (!nik || !bulan) { alert("Isi NIK dan Bulan dulu bre!"); return; }
+    if (!nik || !bulan) { showCustomAlert("warning", "Form Belum Lengkap", "Isi NIK dan Bulan dulu bre!"); return; }
 
     document.getElementById("loading-pribadi").classList.remove("hidden");
     document.getElementById("hasil-pribadi").classList.add("hidden");
@@ -359,7 +403,7 @@
         document.getElementById("total-jam-pribadi").innerText = "0 Jam 0 Menit";
       }
     } catch (err) {
-      alert("Koneksi error, coba lagi nanti!");
+      showCustomAlert("error", "Gangguan Koneksi", "Koneksi error, coba lagi nanti!");
     }
     document.getElementById("loading-pribadi").classList.add("hidden");
     document.getElementById("hasil-pribadi").classList.remove("hidden");
@@ -374,21 +418,12 @@
     });
   }
 
-  // =========================================
-  // SEMUA addEventListener DIPINDAH KE SINI
-  // supaya jalan setelah SELURUH HTML (termasuk
-  // div #modal-pribadi di bagian bawah) sudah dimuat.
-  // Ini yang memperbaiki bug "TRANSMIT DATA" nge-refresh
-  // halaman & data gak masuk ke Google Sheets.
-  // =========================================
   document.addEventListener("DOMContentLoaded", function() {
 
-    // Pasang event listener buat durasi otomatis
     document.getElementById("jamMulai").addEventListener("change", hitungDurasi);
     document.getElementById("jamSelesai").addEventListener("change", hitungDurasi);
     document.getElementById("isIstirahat").addEventListener("change", hitungDurasi);
 
-    // Tarik data karyawan dinamis
     document.getElementById("nik").addEventListener("input", function() {
       const nikUser = this.value.trim();
       const formDetail = document.getElementById("form-detail-lembur");
@@ -419,14 +454,14 @@
               generateTimeOptions(); 
               formDetail.className = "visible"; 
             } else {
-              alert("❌ AKSES DITOLAK: NIK tidak terdaftar di sistem!");
+              showCustomAlert("error", "Akses Ditolak", "NIK tidak terdaftar di sistem!");
               this.value = "";
               formDetail.className = "hidden";
             }
           })
           .catch(error => {
             loading.className = "hidden";
-            alert("❌ Gagal mengecek NIK. Periksa koneksi internet.");
+            showCustomAlert("error", "Gagal Validasi", "Gagal mengecek NIK. Periksa koneksi internet.");
           });
       }
     });
@@ -454,7 +489,6 @@
     document.getElementById("form-lembur").addEventListener("submit", async function(e) {
       e.preventDefault(); 
       
-      // Perbaikan target selector tombol submit biar gak null
       const btnSubmit = document.querySelector("#form-detail-lembur button[type='submit']");
       const textAsli = btnSubmit.innerHTML;
       btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> TRANSMITTING DATA...';
@@ -487,15 +521,17 @@
         try { parsedResult = JSON.parse(resultText); } catch (e) { }
 
         if (parsedResult.status === "error") {
-          alert(parsedResult.message || "❌ GAGAL: Terjadi kesalahan di sistem.");
+          showCustomAlert("error", "Gagal Kirim", parsedResult.message || "Terjadi kesalahan di sistem.");
           btnSubmit.innerHTML = textAsli; btnSubmit.disabled = false; return; 
         }
         if (parsedResult.status === "duplikat") {
-          alert(parsedResult.message || "⚠️ DITOLAK: Data lembur duplikat nih, sudah diinput sebelumnya!");
+          showCustomAlert("duplikat", "Data Duplikat", parsedResult.message || "Data lembur duplikat nih, sudah diinput sebelumnya!");
           btnSubmit.innerHTML = textAsli; btnSubmit.disabled = false; return; 
         }
-
-        alert("✅ MANTAP! Data lembur berhasil disubmit. Tiket sedang disiapkan...");
+        if (parsedResult.status === "terlambat") {
+          showCustomAlert("warning", "Lewat Batas Waktu", parsedResult.message || "Laporan melewati batas waktu maksimal pelaporan!");
+          btnSubmit.innerHTML = textAsli; btnSubmit.disabled = false; return; 
+        }
 
         const inputNik = document.getElementById("nik").value;
         const inputNama = document.getElementById("nama").value;
@@ -528,7 +564,7 @@
         ticketWrapper.classList.add("visible");
         
       } catch (error) {
-        alert("❌ KONEKSI PUTUS! Cek internet lu, Mas bre.");
+        showCustomAlert("error", "Koneksi Putus", "Cek internet lu, Mas bre.");
       } finally {
         btnSubmit.innerHTML = textAsli;
         btnSubmit.disabled = false;
@@ -537,6 +573,18 @@
 
   });
 </script>
+
+<!-- CUSTOM NOTIFICATION MODAL -->
+<div id="custom-alert-modal" class="hidden" style="position: fixed; inset: 0; width: 100vw; height: 100dvh; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 16px; box-sizing: border-box;">
+  <div style="background: #1e1e1e; border: 1px solid #00f3ff; width: 100%; max-width: 360px; border-radius: 15px; padding: 24px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.8); animation: alertPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;">
+    <div id="alert-icon-container" style="width: 50px; height: 50px; border-radius: 50%; margin: 0 auto 15px auto; display: flex; align-items: center; justify-content: center; font-size: 20px;">
+      <i id="alert-icon" class="fas fa-triangle-exclamation"></i>
+    </div>
+    <h3 id="alert-title" style="margin: 0 0 8px 0; font-size: 16px; font-weight: 700; color: #fff;">Pemberitahuan Sistem</h3>
+    <p id="alert-message" style="margin: 0 0 20px 0; font-size: 13px; color: #aaa; line-height: 1.5;">Pesan pemberitahuan akan tampil di sini.</p>
+    <button id="alert-btn" onclick="tutupCustomAlert()" style="width: 100%; padding: 12px; background: #00f3ff; color: #000; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; text-shadow: none; box-shadow: 0 0 10px rgba(0,243,255,0.4);">Mengerti</button>
+  </div>
+</div>
 
 <div id="modal-pribadi" class="hidden" style="position: fixed; inset: 0; width: 100vw; height: 100dvh; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 15px; box-sizing: border-box;">
   <div style="background: #121212; border: 1px solid #00f3ff; width: 100%; max-width: 400px; border-radius: 10px; padding: 15px; max-height: 85vh; display: flex; flex-direction: column; box-sizing: border-box; overflow-y: auto;">
