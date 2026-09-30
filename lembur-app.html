@@ -113,7 +113,7 @@
       color: var(--text-main);
       border: 1px solid var(--border-color);
       border-radius: 10px;
-      font-size: 14px;
+      font-size: 16px; /* Mencegah auto-zoom di iOS */
       font-family: inherit;
       transition: all 0.2s ease;
       box-sizing: border-box;
@@ -380,7 +380,7 @@
   </div>
 
   <div class="footer-sig">
-    WHSP SYSTEM &bull; Build 2.4.1 (rel-ryl)
+    WHSP SYSTEM &bull; Build 2.5.0 (rel-ryl)
   </div>
 
   <!-- TIKET HASIL SUBMIT -->
@@ -423,7 +423,7 @@
       
       <div class="barcode-area">
         <div class="barcode-text" id="t-barcode">WH-0000-000000</div>
-        <div style="font-size: 9px; color: #64748b; margin-top: 6px;">VERIFIED DIGITAL DOCUMENT &bull; Build 2.4.1 (rel-ryl)</div>
+        <div style="font-size: 9px; color: #64748b; margin-top: 6px;">VERIFIED DIGITAL DOCUMENT &bull; Build 2.5.0 (rel-ryl)</div>
       </div>
     </div>
 
@@ -523,6 +523,44 @@
   };
 
   let activeTimeTarget = '';
+  let nikAbortController = null;
+
+  // 🚀 FUNGSI API YANG KUAT DENGAN TIMEOUT & RETRY SUPAYA BEBAS DARI "NETWORK ERROR" PALSU
+  async function apiCall(params, options = { timeout: 12000, retries: 2, signal: null }) {
+    for (let i = 0; i <= options.retries; i++) {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), options.timeout);
+      
+      // Hubungkan eksternal signal jika ada (untuk pembatalan ketikan NIK)
+      if (options.signal) {
+        options.signal.addEventListener('abort', () => ctrl.abort());
+      }
+
+      try {
+        let url = APPS_SCRIPT_URL + "?" + new URLSearchParams(params);
+        const res = await fetch(url, { signal: ctrl.signal || ctrl.signal });
+        clearTimeout(t);
+        return await res.json();
+      } catch (err) {
+        clearTimeout(t);
+        if (i === options.retries || err.name === 'AbortError') throw err;
+        await new Promise(r => setTimeout(r, 600 * Math.pow(2, i)));
+      }
+    }
+  }
+
+  // Bangunkan server (Warm-up) begitu halaman dibuka agar terhindar dari cold start lama
+  document.addEventListener("DOMContentLoaded", function() {
+    apiCall({ action: 'ping' }, { timeout: 5000, retries: 0 }).catch(() => {});
+    
+    // Cek cache localStorage jika user pernah login sebelumnya
+    const savedNik = localStorage.getItem("whsp_last_nik");
+    if (savedNik) {
+      document.getElementById("nik").value = savedNik;
+      // Trigger event input otomatis
+      document.getElementById("nik").dispatchEvent(new Event('input'));
+    }
+  });
 
   function showNotification(type, title, message) {
     const modal = document.getElementById("custom-alert-modal");
@@ -662,8 +700,7 @@
     tbody.innerHTML = "";
 
     try {
-      let response = await fetch(`${APPS_SCRIPT_URL}?action=cek_pribadi&nik=${nik}&bulan=${bulan}`);
-      let result = await response.json();
+      let result = await apiCall({ action: 'cek_pribadi', nik: nik, bulan: bulan });
       let totalMenitKeseluruhan = 0;
 
       if (result.status === "success" && result.data && result.data.length > 0) {
@@ -691,7 +728,7 @@
         document.getElementById("total-jam-pribadi").innerText = "0 Jam 0 Menit";
       }
     } catch (err) {
-      showNotification("error", "Gangguan Koneksi", "Gagal memuat data riwayat. Cek koneksi internet.");
+      showNotification("error", "Gangguan Koneksi", "Gagal memuat data riwayat. Periksa koneksi internet.");
     }
     
     document.getElementById("loading-pribadi").classList.add("hidden");
@@ -710,22 +747,29 @@
   document.addEventListener("DOMContentLoaded", function() {
     document.getElementById("isIstirahat").addEventListener("change", hitungDurasi);
 
+    // 🚀 PENCARIAN NIK MENGGUNAKAN ABORTCONTROLLER (MENCEGAH RACE CONDITION SAAT KETIK CEPAT)
     document.getElementById("nik").addEventListener("input", function() {
       const nikUser = this.value.trim();
       const formDetail = document.getElementById("form-detail-lembur");
       const loading = document.getElementById("loading-nik");
     
+      if (nikAbortController) nikAbortController.abort();
+      nikAbortController = new AbortController();
+
       if (nikUser.length < 8) { formDetail.className = "hidden"; return; }
 
       if (nikUser.length === 8) {
         loading.className = "visible"; 
-        fetch(`${APPS_SCRIPT_URL}?action=cek_karyawan&nik=${nikUser}`)
-          .then(response => response.json())
+        
+        apiCall({ action: 'cek_karyawan', nik: nikUser }, { signal: nikAbortController.signal })
           .then(result => {
             loading.className = "hidden"; 
             if (result.status === "success") {
               document.getElementById("nama").value = result.nama;
               document.getElementById("jabatan").value = result.posisi;
+              
+              // Simpan NIK ke localStorage agar session berikutnya aman
+              localStorage.setItem("whsp_last_nik", nikUser);
             
               let listKerjaan = daftarPekerjaan[result.posisi] || ["Replacement", "Others"];
               let htmlOpsi = '<option value="" disabled selected>-- Pilih Pekerjaan --</option>';
@@ -742,6 +786,7 @@
             }
           })
           .catch(error => {
+            if (error.name === 'AbortError') return; // Abaikan jika dibatalkan karena user ganti NIK
             loading.className = "hidden";
             showNotification("error", "Gangguan", "Gagal memeriksa NIK. Periksa koneksi internet.");
           });
@@ -821,7 +866,7 @@
           btnSubmit.innerHTML = textAsli; btnSubmit.disabled = false; return; 
         }
 
-        // 3. KASUS: STATUS LAIN YANG BUKAN SUCCESS (MENCEGAH LOLOS PALSU)
+        // 3. KASUS: STATUS LAIN YANG BUKAN SUCCESS
         if (parsedResult.status !== "success") {
           showNotification("error", "Ditolak Sistem", parsedResult.message || "Overtime gagal disubmit. Kemungkinan melewati batas waktu atau kendala sistem.");
           btnSubmit.innerHTML = textAsli; btnSubmit.disabled = false; return; 
@@ -851,8 +896,11 @@
         document.getElementById("ticket-wrapper").classList.remove("hidden");
         
       } catch (error) {
-        // 4. KASUS: GANGGUAN JARINGAN (INTERNET PUTUS TOTAL)
-        showNotification("error", "Gangguan Jaringan", "Koneksi internet buruk atau terputus. Gagal mengirim data lembur, periksa sinyal HP lu.");
+        // 4. KASUS: GANGGUAN JARINGAN (DETEKSI AKURAT BERBASIS NAVIGATOR ONLINE)
+        let pesanNet = !navigator.onLine 
+          ? "HP lu dalam mode Offline / tidak ada koneksi internet." 
+          : "Koneksi ke server terputus atau timeout. Silakan coba kirim ulang.";
+        showNotification("error", "Gangguan Jaringan", pesanNet);
       } finally {
         btnSubmit.innerHTML = textAsli;
         btnSubmit.disabled = false;
