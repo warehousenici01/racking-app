@@ -525,10 +525,10 @@
   let activeTimeTarget = '';
   let nikAbortController = null;
 
-  // 🚀 FUNGSI API YANG AMAN DARI BUG DEFAULT PARAMETER & TIMEOUT
+  // 🚀 FUNGSI API DENGAN PENGAMAN REDIRECT & TIMEOUT
   async function apiCall(params, options = {}) {
-    const timeout = options.timeout !== undefined ? options.timeout : 12000;
-    const retries = options.retries !== undefined ? options.retries : 2;
+    const timeout = options.timeout !== undefined ? options.timeout : 7000;
+    const retries = options.retries !== undefined ? options.retries : 0;
     const externalSignal = options.signal || null;
 
     for (let i = 0; i <= retries; i++) {
@@ -541,13 +541,18 @@
 
       try {
         let url = APPS_SCRIPT_URL + "?" + new URLSearchParams(params);
-        const res = await fetch(url, { signal: ctrl.signal });
+        // Wajib pakai redirect: 'follow' buat Google Apps Script
+        const res = await fetch(url, { 
+          method: 'GET',
+          redirect: 'follow',
+          signal: ctrl.signal 
+        });
         clearTimeout(t);
         return await res.json();
       } catch (err) {
         clearTimeout(t);
         if (i === retries || err.name === 'AbortError') throw err;
-        await new Promise(r => setTimeout(r, 600 * Math.pow(2, i)));
+        await new Promise(r => setTimeout(r, 600));
       }
     }
   }
