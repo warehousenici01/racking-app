@@ -525,25 +525,28 @@
   let activeTimeTarget = '';
   let nikAbortController = null;
 
-  // 🚀 FUNGSI API YANG KUAT DENGAN TIMEOUT & RETRY SUPAYA BEBAS DARI "NETWORK ERROR" PALSU
-  async function apiCall(params, options = { timeout: 12000, retries: 2, signal: null }) {
-    for (let i = 0; i <= options.retries; i++) {
+  // 🚀 FUNGSI API YANG AMAN DARI BUG DEFAULT PARAMETER & TIMEOUT
+  async function apiCall(params, options = {}) {
+    const timeout = options.timeout !== undefined ? options.timeout : 12000;
+    const retries = options.retries !== undefined ? options.retries : 2;
+    const externalSignal = options.signal || null;
+
+    for (let i = 0; i <= retries; i++) {
       const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), options.timeout);
+      const t = setTimeout(() => ctrl.abort(), timeout);
       
-      // Hubungkan eksternal signal jika ada (untuk pembatalan ketikan NIK)
-      if (options.signal) {
-        options.signal.addEventListener('abort', () => ctrl.abort());
+      if (externalSignal) {
+        externalSignal.addEventListener('abort', () => ctrl.abort());
       }
 
       try {
         let url = APPS_SCRIPT_URL + "?" + new URLSearchParams(params);
-        const res = await fetch(url, { signal: ctrl.signal || ctrl.signal });
+        const res = await fetch(url, { signal: ctrl.signal });
         clearTimeout(t);
         return await res.json();
       } catch (err) {
         clearTimeout(t);
-        if (i === options.retries || err.name === 'AbortError') throw err;
+        if (i === retries || err.name === 'AbortError') throw err;
         await new Promise(r => setTimeout(r, 600 * Math.pow(2, i)));
       }
     }
