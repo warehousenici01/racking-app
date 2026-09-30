@@ -764,7 +764,7 @@
       if (nikUser.length === 8) {
         loading.className = "visible"; 
         
-        apiCall({ action: 'cek_karyawan', nik: nikUser }, { signal: nikAbortController.signal })
+        apiCall({ action: 'cek_karyawan', nik: nikUser }, { timeout: 7000, retries: 0, signal: nikAbortController.signal })
           .then(result => {
             loading.className = "hidden"; 
             if (result.status === "success") {
