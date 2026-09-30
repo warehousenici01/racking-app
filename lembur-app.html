@@ -804,8 +804,26 @@
         let parsedResult = { status: "unknown" };
         try { parsedResult = JSON.parse(resultText); } catch (e) { }
 
-        if (parsedResult.status === "error" || parsedResult.status === "duplikat" || parsedResult.status === "terlambat") {
-          showNotification(parsedResult.status, "Gagal Input", parsedResult.message || "Terjadi kendala pada sistem.");
+        // 1. KASUS: DATA DUPLIKAT
+        if (parsedResult.status === "duplikat") {
+          showNotification("duplikat", "Data Duplikat Terdeteksi", parsedResult.message || "Data lembur ini sudah pernah diinput sebelumnya!");
+          btnSubmit.innerHTML = textAsli; btnSubmit.disabled = false; return; 
+        }
+
+        // 2. KASUS: LEWAT BATAS WAKTU (DEADLINE) ATAU ERROR DARI SERVER
+        if (parsedResult.status === "error") {
+          let pesanError = parsedResult.message || "";
+          if (pesanError.includes("maksimal dilaporkan") || pesanError.includes("DITOLAK")) {
+            showNotification("warning", "Melewati Batas Waktu Report", pesanError);
+          } else {
+            showNotification("error", "Gagal Disimpan", pesanError);
+          }
+          btnSubmit.innerHTML = textAsli; btnSubmit.disabled = false; return; 
+        }
+
+        // 3. KASUS: STATUS LAIN YANG BUKAN SUCCESS (MENCEGAH LOLOS PALSU)
+        if (parsedResult.status !== "success") {
+          showNotification("error", "Ditolak Sistem", parsedResult.message || "Overtime gagal disubmit. Kemungkinan melewati batas waktu atau kendala sistem.");
           btnSubmit.innerHTML = textAsli; btnSubmit.disabled = false; return; 
         }
 
@@ -833,7 +851,8 @@
         document.getElementById("ticket-wrapper").classList.remove("hidden");
         
       } catch (error) {
-        showNotification("error", "Koneksi Putus", "Gagal mengirim data, periksa koneksi internet.");
+        // 4. KASUS: GANGGUAN JARINGAN (INTERNET PUTUS TOTAL)
+        showNotification("error", "Gangguan Jaringan", "Koneksi internet buruk atau terputus. Gagal mengirim data lembur, periksa sinyal HP lu.");
       } finally {
         btnSubmit.innerHTML = textAsli;
         btnSubmit.disabled = false;
