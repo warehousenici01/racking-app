@@ -525,35 +525,37 @@
   let activeTimeTarget = '';
   let nikAbortController = null;
 
-  // 🚀 FUNGSI API DENGAN PENGAMAN REDIRECT & TIMEOUT
+  // 🚀 FUNGSI API YANG AMAN DARI NYANGKUT & TIMEOUT INFINITE
   async function apiCall(params, options = {}) {
-    const timeout = options.timeout !== undefined ? options.timeout : 7000;
-    const retries = options.retries !== undefined ? options.retries : 0;
+    const timeout = options.timeout !== undefined ? options.timeout : 10000; // Naikkan ke 10 detik aman untuk cold start
     const externalSignal = options.signal || null;
 
-    for (let i = 0; i <= retries; i++) {
-      const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), timeout);
-      
-      if (externalSignal) {
-        externalSignal.addEventListener('abort', () => ctrl.abort());
-      }
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), timeout);
+    
+    if (externalSignal) {
+      externalSignal.addEventListener('abort', () => ctrl.abort());
+    }
 
-      try {
-        let url = APPS_SCRIPT_URL + "?" + new URLSearchParams(params);
-        // Wajib pakai redirect: 'follow' buat Google Apps Script
-        const res = await fetch(url, { 
-          method: 'GET',
-          redirect: 'follow',
-          signal: ctrl.signal 
-        });
-        clearTimeout(t);
-        return await res.json();
-      } catch (err) {
-        clearTimeout(t);
-        if (i === retries || err.name === 'AbortError') throw err;
-        await new Promise(r => setTimeout(r, 600));
+    try {
+      let url = APPS_SCRIPT_URL + "?" + new URLSearchParams(params);
+      const res = await fetch(url, { 
+        method: 'GET',
+        redirect: 'follow',
+        signal: ctrl.signal 
+      });
+      clearTimeout(t);
+      return await res.json();
+    } catch (err) {
+      clearTimeout(t);
+      if (err.name === 'AbortError') {
+        if (externalSignal && externalSignal.aborted) {
+          throw new Error('UserCancelled');
+        } else {
+          throw new Error('Timeout');
+        }
       }
+      throw err;
     }
   }
 
@@ -764,19 +766,22 @@
       if (nikAbortController) nikAbortController.abort();
       nikAbortController = new AbortController();
 
-      if (nikUser.length < 8) { formDetail.className = "hidden"; return; }
+      if (nikUser.length < 8) { 
+        loading.className = "hidden";
+        formDetail.className = "hidden"; 
+        return; 
+      }
 
       if (nikUser.length === 8) {
         loading.className = "visible"; 
         
-        apiCall({ action: 'cek_karyawan', nik: nikUser }, { timeout: 7000, retries: 0, signal: nikAbortController.signal })
+        apiCall({ action: 'cek_karyawan', nik: nikUser }, { signal: nikAbortController.signal })
           .then(result => {
             loading.className = "hidden"; 
             if (result.status === "success") {
               document.getElementById("nama").value = result.nama;
               document.getElementById("jabatan").value = result.posisi;
               
-              // Simpan NIK ke localStorage agar session berikutnya aman
               localStorage.setItem("whsp_last_nik", nikUser);
             
               let listKerjaan = daftarPekerjaan[result.posisi] || ["Replacement", "Others"];
@@ -794,9 +799,9 @@
             }
           })
           .catch(error => {
-            if (error.name === 'AbortError') return; // Abaikan jika dibatalkan karena user ganti NIK
-            loading.className = "hidden";
-            showNotification("error", "Gangguan", "Gagal memeriksa NIK. Periksa koneksi internet.");
+            loading.className = "hidden"; // JEMPOLAN: Pastikan loading selalu mati kalau error/timeout!
+            if (error.message === 'UserCancelled') return; 
+            showNotification("error", "Gangguan", "Gagal memeriksa NIK atau server lama merespons. Coba ketik ulang.");
           });
       }
     });
